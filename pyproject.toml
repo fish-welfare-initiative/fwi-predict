@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "fwi-predict"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+scikit-learn = "^1.5.2"
+geopandas = "^1.0.1"
+prophet = "^1.1.6"
+openpyxl = "^3.1.5"
+case-converter = "^1.1.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+seaborn = "^0.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
