@@ -11,12 +11,15 @@ scikit-learn = "^1.5.2"
 geopandas = "^1.0.1"
 prophet = "^1.1.6"
 openpyxl = "^3.1.5"
-case-converter = "^1.1.0"
+requests = "^2.32.3"
+earthengine-api = "^1.4.1"
 
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
 seaborn = "^0.13.2"
+mapclassify = "^2.8.1"
+folium = "^0.18.0"
 
 [build-system]
 requires = ["poetry-core"]

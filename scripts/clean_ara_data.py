@@ -1,12 +1,10 @@
-# Clean ARA data (from start until March 31, 2024)
+# Clean ARA data (from program start until March 31, 2024)
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from fwi_predict.constants import TIMEZONE
 
-
-def is_str(x) -> bool:
-    return isinstance(x, str)
 
 yes_no_map = {'Yes': True, 'No': False}
 
@@ -15,7 +13,7 @@ column_map = { # Consider later moving to package with column name standard
     'Pond ID': 'pond_id',
     'Measurement Type': 'time_of_day',
     'Group': 'group',
-    'Pond Type': 'treat_group',
+    'Pond Type': 'treatment_group',
     'Time (sample or data collection)': 'sample_time',
     'Name': 'name', # Is this the owner?
     'Which meter are you using?': 'measure_instrument',
@@ -102,6 +100,58 @@ column_map = { # Consider later moving to package with column name standard
 } 
 
 
+def is_str(x) -> bool:
+    return isinstance(x, str)
+
+
+def resolve_duplicates(
+    df, id_cols, string_delimiter="; ", mark_column="had_duplicates"
+):
+    """
+    Resolve duplicates in a DataFrame, marking which rows had duplicates and resolving conflicts.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame containing duplicates.
+        id_cols (list): List of columns defining the unique ID.
+        string_delimiter (str, optional): Delimiter to concatenate strings.
+        mark_column (str, optional): Name of the column to indicate duplicates.
+
+    Returns:
+        pd.DataFrame: A DataFrame with duplicates resolved and marked.
+    """
+    def resolve_group(group):
+        resolved = {}
+        for col in group.columns:
+            if col in id_cols:
+                # Keep ID columns as is
+                resolved[col] = group[col].iloc[0]
+            else:
+                if pd.api.types.is_numeric_dtype(group[col]):
+                    # Resolve numeric columns by mean, ignoring NaNs
+                    resolved[col] = group[col].mean(skipna=True)
+                elif pd.api.types.is_string_dtype(group[col]):
+                    # Resolve string columns by concatenating unique values
+                    unique_strings = group[col].dropna().unique()
+                    resolved[col] = string_delimiter.join(unique_strings)
+                else:
+                    # Cast other types to strings and concatenate unique values
+                    unique_values = group[col].dropna().astype(str).unique()
+                    resolved[col] = string_delimiter.join(unique_values)
+        
+        # Mark duplicates if the group contains more than one row
+        resolved[mark_column] = len(group) > 1
+        return pd.Series(resolved)
+
+    # Apply resolution to each group
+    resolved_df = (
+        df.groupby(id_cols)
+        .apply(resolve_group, include_groups=False)
+        .reset_index()
+    )
+
+    return resolved_df
+
+
 if __name__ == "__main__":
     ara_raw = pd.read_excel("data/raw/All ARA Data until March 31, 2024.xlsx", sheet_name='Sheet1')
 
@@ -121,6 +171,8 @@ if __name__ == "__main__":
     ara['sample_dt'] = pd.to_datetime(ara['date'].dt.strftime("%Y-%m-%d") + ' ' + ara['sample_time'], errors='coerce')
     ara['sample_dt'] = ara['sample_dt'].dt.tz_localize(TIMEZONE)
     ara = ara.drop(columns=['date', 'sample_time'])
+
+    ara['time_of_day'] = ara['time_of_day'].str.lower()
 
     # Clean badly formatted values. See eponymous notebook for data exploration.
 
@@ -237,8 +289,15 @@ if __name__ == "__main__":
     ara.loc[str_formatted, 'primary_productivity_gpp_mg_per_L'] = np.nan # All unintelligible
     ara['primary_productivity_gpp_mg_per_L'] = ara['primary_productivity_gpp_mg_per_L'].astype(float)
 
+    # Deduplicate dataframe
+    # Note that this may also remove columns without sample dates.
+    print('Deduplicating...')
+    id_cols = ['pond_id', 'sample_dt']
+    ara = resolve_duplicates(ara, id_cols)
+    print('Done deduplicating.')
+
     # Re-order cols and save
-    front_cols = ['pond_id', 'group', 'treat_group', 'sample_dt', 'time_of_day']
+    front_cols = ['pond_id', 'group', 'treatment_group', 'sample_dt', 'time_of_day']
     ara = ara[front_cols + [col for col in ara.columns if col not in front_cols]]
 
-    ara.to_csv("data/clean/ara_clean.csv", index=False)
+    ara.to_csv("data/clean/ara_measurements_clean.csv", index=False)
