@@ -4,8 +4,6 @@ from typing import Dict
 from typing import Optional
 
 import folium
-import geopandas as gpd
-from shapely.geometry import Point, MultiPoint
 
 
 basemaps = {
