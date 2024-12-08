@@ -125,17 +125,18 @@ if __name__ == "__main__":
 	
 	# Get lat/lons as tuples
 	ponds['location_parsed'] = ponds['location'].apply(load_coords)
+   
+ # Make sure we got coords for all gmaps links
 	gmaps_parsed = ponds.loc[
   	ponds['location'].apply(is_gmaps_bitly), 'location_parsed'
 	].apply(lambda x: isinstance(x, tuple)).all()
+	assert(gmaps_parsed)
 
-	assert(gmaps_parsed) # Make sure we got coords for all gmaps links
-
+  # Load into gedf
 	points = [Point(tup[1], tup[0])
 						if isinstance(tup, tuple) else np.nan
 						for tup in ponds['location_parsed'].tolist()]
-
 	ponds = gpd.GeoDataFrame(ponds, geometry=points, crs=4326)
 	ponds = ponds.drop(columns=['location', 'location_parsed'])
 
-	ponds.to_csv("data/clean/pond_metadata_clean.csv")
+	ponds.to_file("data/clean/pond_metadata_clean.geojson")

@@ -176,6 +176,10 @@ if __name__ == "__main__":
 
     # Clean badly formatted values. See eponymous notebook for data exploration.
 
+    # Construct IDs
+    ara['region'] = ara['pond_id'].str[:2]
+    ara['farm_id'] = ara['pond_id'].str.replace(r"\d+$", "", regex=True)
+
     # Booleans
     ara['follow_up'] = ara['follow_up'].map(yes_no_map)
     ara['in_range'] = ara['in_range'].map(yes_no_map)
@@ -297,7 +301,7 @@ if __name__ == "__main__":
     print('Done deduplicating.')
 
     # Re-order cols and save
-    front_cols = ['pond_id', 'group', 'treatment_group', 'sample_dt', 'time_of_day']
+    front_cols = ['pond_id', 'region', 'farm_id', 'group', 'treatment_group', 'sample_dt', 'time_of_day']
     ara = ara[front_cols + [col for col in ara.columns if col not in front_cols]]
 
     ara.to_csv("data/clean/ara_measurements_clean.csv", index=False)
