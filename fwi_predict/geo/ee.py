@@ -6,6 +6,20 @@ from typing import Any, Dict, Literal, Union
 
 import ee
 
+SENTINEL2_SCL_MAP = {
+ 	1: "Saturated/defective",
+	2: "Dark area pixels",
+	3: "Cloud shadows",
+	4: "Vegetation",
+	5: "Bare soils",
+	6: "Water",
+	7: "Low probability clouds / unclassified",
+	8: "Medium probability clouds",
+	9: "High probability clouds",
+	10: "Cirrus",
+	11: "Snow/ice"
+}
+
 def get_gfs() -> ee.ImageCollection:
 	"""Get Global Forecast System 384-Hour Predicted Atmosphere Data."""
 	return ee.ImageCollection("NOAA/GFS0P25")
@@ -66,15 +80,15 @@ def get_time_distance(
     )
 
 
-def get_nearest_sentinel2_image(feature: ee.Feature, search_days: int = 7):
+def get_nearest_sentinel2_image(feature: ee.Feature, forward_days: int = 0, back_days: int = 10):
 	"""Add docstring.
      
   Can generalize to be non sentinel later. 
 	"""
 	# Set the date range (e.g., 30 days before and after the sample date)
 	date = ee.Date(feature.get('sample_dt'))
-	start_date = date.advance(-search_days, 'day') # Can later add datetime feature name argument
-	end_date = date.advance(search_days, 'day')
+	start_date = date.advance(-back_days, 'day') # Can later add datetime feature name argument
+	end_date = date.advance(forward_days, 'day')
 	
 	# Get Sentinel-2 image collection
 	collection = get_sentinel2_l2a() \

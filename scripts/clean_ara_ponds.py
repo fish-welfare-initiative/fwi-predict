@@ -42,14 +42,16 @@ def dms_to_decimal(dms_string):
     match = re.match(pattern, dms_string)
 
     if not match:
-        raise ValueError(f"Invalid DMS format: {dms_string}")
+      raise ValueError(f"Invalid DMS format: {dms_string}")
 
     degrees, minutes, seconds, direction = match.groups()
     decimal_degrees = (
-        float(degrees) + float(minutes) / 60 + float(seconds) / 3600
+      float(degrees) + float(minutes) / 60 + float(seconds) / 3600
     )
+    
     if direction in "SW":
-        decimal_degrees = -decimal_degrees
+      decimal_degrees = -decimal_degrees
+    
     return decimal_degrees
 
 
