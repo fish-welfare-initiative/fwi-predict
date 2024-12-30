@@ -553,6 +553,21 @@ files = [
 tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipython", "littleutils", "pytest", "rich"]
 
 [[package]]
+name = "facets-overview"
+version = "1.1.1"
+description = "Python code to support the Facets Overview visualization"
+optional = false
+python-versions = "*"
+files = [
+    {file = "facets_overview-1.1.1-py2.py3-none-any.whl", hash = "sha256:ee1feafcb0b486a598937246ac86ffb84d5fed2c32ddcaceeed01df792c26b73"},
+]
+
+[package.dependencies]
+numpy = ">=1.16.0"
+pandas = ">=0.22.0"
+protobuf = ">=3.20.0"
+
+[[package]]
 name = "folium"
 version = "0.18.0"
 description = "Make beautiful maps with Leaflet.js & Python"
@@ -2907,7 +2922,25 @@ files = [
     {file = "xyzservices-2024.9.0.tar.gz", hash = "sha256:68fb8353c9dbba4f1ff6c0f2e5e4e596bb9e1db7f94f4f7dfbcb26e25aa66fde"},
 ]
 
+[[package]]
+name = "yellowbrick"
+version = "1.5"
+description = "A suite of visual analysis and diagnostic tools for machine learning."
+optional = false
+python-versions = ">=3.4, <4"
+files = [
+    {file = "yellowbrick-1.5-py3-none-any.whl", hash = "sha256:4bb2895cecf94a0e736398bbac6c5d72032ba3ff2273f49df660b14ef419305d"},
+    {file = "yellowbrick-1.5.tar.gz", hash = "sha256:99a6336dd2e7ce586a8cde67966b79c51b479d3759f3c083d7e19ffe949f6076"},
+]
+
+[package.dependencies]
+cycler = ">=0.10.0"
+matplotlib = ">=2.0.2,<3.0.0 || >3.0.0"
+numpy = ">=1.16.0"
+scikit-learn = ">=1.0.0"
+scipy = ">=1.0.0"
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.13"
-content-hash = "2ddcb7dbc03d7f6d9d230467301ba78f288e8d1d8f676dcef4be14597b3f24a5"
+content-hash = "fcfd185da72d3f949cfcffd6127dc80612ab08ec31d155ebd7f14dccb51cbe37"

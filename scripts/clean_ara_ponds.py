@@ -128,7 +128,7 @@ if __name__ == "__main__":
 	# Get lat/lons as tuples
 	ponds['location_parsed'] = ponds['location'].apply(load_coords)
    
- # Make sure we got coords for all gmaps links
+  # Make sure we got coords for all gmaps links
 	gmaps_parsed = ponds.loc[
   	ponds['location'].apply(is_gmaps_bitly), 'location_parsed'
 	].apply(lambda x: isinstance(x, tuple)).all()
