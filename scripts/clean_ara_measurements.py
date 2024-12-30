@@ -1,7 +1,6 @@
 # Clean ARA data (from program start until March 31, 2024)
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 from fwi_predict.constants import TIMEZONE
 
@@ -190,6 +189,10 @@ if __name__ == "__main__":
     ara['disease_outbreak'] = ara['disease_outbreak'].map(yes_no_map)
     ara['lice_infestation'] = ara['lice_infestation'].map(yes_no_map)
     ara['vegetation_in_water'] = ara['vegetation_in_water'].map(yes_no_map)
+
+    # Set early missing follow up values to False
+    correct_idx = (ara['follow_up'].isna()) & (ara['sample_dt'].dt.date < pd.Timestamp('2022-10-01').date())
+    ara.loc[correct_idx, 'follow_up'] = False
 
     # Turbidity
     str_formatted = ara['turbidity_cm'].apply(is_str)
