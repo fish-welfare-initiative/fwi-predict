@@ -9,7 +9,7 @@ WQ_RANGES = {
             'evening': (8, 12)
         },
         'ideal': {
-            'morning': (3, 5),
+            'morning': (4, 5),
             'evening': (8, 10)
         }
     },
