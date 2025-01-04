@@ -6,17 +6,19 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.10.11"
-scikit-learn = "^1.6.0"
+python = "3.12.7"
 geopandas = "^1.0.1"
 openpyxl = "^3.1.5"
 earthengine-api = "^1.4.3"
-setuptools = "^75.6.0"
 geemap = "^0.35.1"
 prophet = "^1.1.6"
 yellowbrick = "^1.5"
-dataprep = "^0.4.5"
 streamlit = "^1.41.1"
+ydata-profiling = "^4.12.1"
+autogluon-tabular = "^1.2"
+setuptools = "^75.6.0"
+plyer = "^2.1.0"
+timezonefinder = "^6.5.7"
 
 
 [tool.poetry.group.dev.dependencies]

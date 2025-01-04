@@ -13,7 +13,7 @@ WQ_RANGES = {
             'evening': (8, 10)
         }
     },
-    'ph': {  # Can also do morning evening to have consistent interface
+    'ph': {
         'required': (6.5, 8.5),
         'ideal': (7, 8)
     },
@@ -26,3 +26,5 @@ WQ_RANGES = {
         'ideal': (30, 40)
     }
 }
+
+FORECAST_TIMES = [3, 9, 15, 36, 0, -12, -36, -60]
