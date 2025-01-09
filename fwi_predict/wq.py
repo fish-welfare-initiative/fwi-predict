@@ -7,7 +7,7 @@ import pandas as pd
 from .constants import WQ_RANGES
 
 
-def get_in_range(parameter: str, values: pd.Series, periods: pd.Series) -> pd.Series:
+def get_in_required_range(parameter: str, values: pd.Series, periods: pd.Series) -> pd.Series:
     """Checks if water quality parameter is below, within, or above the required range.
 
     Parameters:

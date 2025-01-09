@@ -1,5 +1,6 @@
 """Utilities for Google Earth Engine."""
 import time
+from pathlib import Path
 from typing import List, Literal, Union
 
 import datetime
@@ -134,7 +135,6 @@ def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
 			print('Data export was cancelled.')
 			return False
 		else:
-			print(f"Data export is {state}.")
 			time.sleep(check_interval)
 
 
@@ -145,7 +145,9 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	if gfs is None:
 		gfs = get_gfs()
 
+
 	# Get times for which we want forecasts.
+	sample_idx = sample.get('sample_idx') # Get sample index
 	sample_dt = ee.Date(sample.get('sample_dt'))
 	day_prior = sample_dt \
     .advance(5.5, 'hour') \
@@ -157,10 +159,8 @@ def get_sample_gfs_forecast(sample: ee.Feature,
   )
 
   # Pre-filter GFS to reduce computation
-	search_window = max(forecast_times) - min(forecast_times) + 24
-
 	forecast_subset = gfs.filterDate( 
-    ee.Date(forecast_time_list.get(1)).advance(-search_window, 'hour'), # Earliest forecast initialization time we are interested in 
+    ee.Date(forecast_time_list.sort().getNumber(0)).advance(-1, 'day'), # Earliest forecast initialization time we are interested in 
     sample_dt.advance(-1, 'day') # Want forecasts initialized one day before sample was taken.
   )
 
@@ -189,9 +189,16 @@ def get_sample_gfs_forecast(sample: ee.Feature,
     .flatten() \
     .map(lambda f: f # Set metadata
       .set('forecast_creation_dt', f.id().slice(0, 10)) # Same as below
-      .set('forecast_time', f.id().slice(11, 14)) # Would be good to make this less hacky
-      .set('sample_idx', sample.get('sample_idx'))
+      .set('forecast_hour', f.id().slice(11, 14)) # Would be good to make this less hacky
+      .set('sample_idx', sample_idx)
     )
+	
+	# Map each element of forecast_time_list to each feature of forecast_values
+	forecast_values_list = forecast_values.toList(forecast_values.size())
+	forecast_values = ee.FeatureCollection(
+		forecast_values.map(lambda f: f.set('forecast_time', 
+			ee.List(forecast_times).get(forecast_values_list.indexOf(f))))
+	)
 
     # Get forecast at time of sample
 	sample_dt_rounded = sample_dt \
@@ -208,8 +215,9 @@ def get_sample_gfs_forecast(sample: ee.Feature,
   
 	sample_time_forecast = sample_time_forecast \
     .set('forecast_creation_dt', id.slice(0, 10)) \
+		.set('forecast_hour', id.slice(11, 14)) \
     .set('forecast_time', 'sample') \
-    .set('sample_idx', sample.get('sample_idx'))
+    .set('sample_idx', sample_idx)
 
   # Get cumulative values for the week prior to the sample time
   # 9 AM UTC is 3:30 PM IST
@@ -241,11 +249,11 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	week_history = get_cumulative_history(7)
 
 	three_day_history = three_day_history \
-    .set('sample_idx', sample.get('sample_idx')) \
+    .set('sample_idx', sample_idx) \
     .set('forecast_time', 'three_day_cum')
   
 	week_history = week_history \
-    .set('sample_idx', sample.get('sample_idx')) \
+    .set('sample_idx', sample_idx) \
     .set('forecast_time', 'seven_day_cum')
 
   # Merge and return
@@ -256,7 +264,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 
 def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 																 forecast_times: List[int],
-																 filepath: str,
+																 filepath: Union[str, Path],
 																 description: str = None,
 																 bucket: str = 'fwi-predict',
 																 project: str = 'fwi-water-quality-sensing') -> ee.batch.Task:
@@ -272,16 +280,21 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 	forecast_coll = samples_ee \
 		.map(lambda f: get_sample_gfs_forecast(f, forecast_times)) \
 		.flatten()
+	
+	# Remove file extension if present.
+	fp = Path(filepath)
+	fp = fp.parent / fp.stem
+	fp = fp.as_posix()
 
 	# Export GFS forecast
 	task = ee.batch.Export.table.toCloudStorage(
 		collection=forecast_coll,
 		description=description,
 		bucket=bucket,
-		fileNamePrefix=filepath,
+		fileNamePrefix=fp,
 		fileFormat='CSV'
 	)
 	task.start()
-	print(f"Exporting GFS forecast data to {filepath} in {bucket}.\nVisit https://code.earthengine.google.com/tasks to monitor the task.")
+	print(f"Exporting GFS forecast data to {bucket}/{fp}.\nVisit https://code.earthengine.google.com/tasks to monitor the export.")
 	
 	return task

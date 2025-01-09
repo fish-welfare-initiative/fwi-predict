@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import click
 import geopandas as gpd
@@ -13,18 +13,22 @@ from fwi_predict.pipeline import create_standard_dataset
 @click.option('--gee_project', type=str, default='fwi-water-quality-sensing', help='GEE project to use for export.')
 def create_dataset(samples_path, outdir, gfs_download_root, gcs_bucket, gee_project):
 	"""Create standard training dataset."""
-	filename = os.path.splitext(os.path.basename(samples_path))[0]
-	gcs_filepath = os.path.join("train", "gfs", filename + '.csv')
+	filename = Path(samples_path).stem
+	gcs_filepath = Path("train") / "gfs" / f"{filename}.csv"
+	gfs_download_root = Path(gfs_download_root).resolve()
 
 	samples = gpd.read_file(samples_path)
 	ds = create_standard_dataset(samples, gcs_filepath, gfs_download_root,
-								 							 filename, gcs_bucket, gee_project)
+															 filename, gcs_bucket, gee_project)
 		
 	if ds is not None:
-		os.makedirs(outdir, exist_ok=True)
-		outpath = os.path.join(outdir, filename + '_predict_df.csv')
+		outdir = Path(outdir).resolve()
+		outdir.mkdir(parents=True, exist_ok=True)
+		outpath = outdir / f"{filename}_predict_df.csv"
 		ds.to_csv(outpath)
-		print(f"Dataset created and saved to {outpath}.")
+		print(f"Training data created.\nSaved to {outpath}.")
+	else:
+		print("Training data creation failed.")
 
 
 if __name__ == '__main__':

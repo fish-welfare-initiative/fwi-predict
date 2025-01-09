@@ -1,6 +1,6 @@
 import ee
-import os
-from typing import List
+from pathlib import Path
+from typing import Union
 
 import geopandas as gpd
 import pandas as pd
@@ -18,31 +18,18 @@ def clean_gfs(raw_gfs: pd.DataFrame) -> pd.DataFrame:
 	gfs = gfs.drop(columns=['system:index', '.geo'])
 
 	# Check data correctness
-	observations_per_measurement = gfs.groupby('measurement_idx').size()
+	observations_per_measurement = gfs.groupby('sample_idx').size()
 	assert (observations_per_measurement.eq(observations_per_measurement.iloc[0]).all()), (
 		"Number of observations per measurement varies."
 	)
 
-	# Format date columns. Right now we drop many of these but may keep later.
-	gfs['forecast_creation_dt'] = pd.to_datetime(gfs['forecast_creation_dt'].astype(str), format='%Y%m%d%H')
-	fixed_time_forecast = gfs['forecast_time'].str.isnumeric()
-	gfs.loc[fixed_time_forecast, 'forecast_dt'] = (
-		gfs.loc[fixed_time_forecast, 'forecast_creation_dt'] + 
-		pd.Series(pd.to_timedelta(gfs.loc[fixed_time_forecast, 'forecast_time'], unit='hour'), index=gfs[fixed_time_forecast].index)
-	)
-	gfs.loc[~fixed_time_forecast, 'forecast_dt'] = pd.NaT
-	gfs['forecast_date'] = gfs['forecast_dt'].dt.date
-	gfs['forecast_hour_of_day'] = gfs['forecast_dt'].dt.hour
-
 	# Reorder columns and rows
-	front_cols = ['measurement_idx', 'forecast_time', 'forecast_dt', 'forecast_date', 'forecast_hour_of_day', 'forecast_creation_dt'] 
+	front_cols = ['sample_idx', 'forecast_time', 'forecast_creation_dt', 'forecast_hour'] 
 	gfs = gfs[front_cols + [col for col in gfs.columns if col not in front_cols]]
-	gfs = gfs.sort_values(['measurement_idx', 'forecast_dt'])
+	gfs = gfs.sort_values(['sample_idx', 'forecast_time'])
 
 	# Pivot wide so one observation per measurement
-	gfs_wide = gfs \
-		.drop(columns=['forecast_creation_dt', 'forecast_hour_of_day', 'forecast_date', 'forecast_dt']) \
-		.pivot(index='measurement_idx', columns='forecast_time')
+	gfs_wide = gfs.pivot(index='sample_idx', columns='forecast_time')
 	gfs_wide.columns = gfs_wide.columns.map('{0[0]}_{0[1]}'.format)
 
 	return gfs_wide
@@ -51,7 +38,7 @@ def clean_gfs(raw_gfs: pd.DataFrame) -> pd.DataFrame:
 def merge_samples_and_gfs(samples: pd.DataFrame,
 					  			 				gfs_data: pd.DataFrame) -> pd.DataFrame:
 	"""Create Dataframe for prediction from samples and GFS data."""
-	predict_df = samples.set_index('measurement_idx').join(gfs_data)
+	predict_df = samples.set_index('sample_idx').join(gfs_data)
 
 	# Add time categoricals
 	predict_df['month'] = predict_df['sample_dt'].dt.month
@@ -65,7 +52,7 @@ def merge_samples_and_gfs(samples: pd.DataFrame,
 
 
 def create_standard_dataset(samples: gpd.GeoDataFrame,
-														filepath: str,
+														filepath: Union[str, Path],
 														download_dir: str,
 														description: str,
 														gcs_bucket: str = 'fwi-predict',
@@ -92,10 +79,11 @@ def create_standard_dataset(samples: gpd.GeoDataFrame,
 	download_files(bucket=gcs_bucket,
 								 file_glob=filepath,
 								 download_dir=download_dir,
-								 project='fwi-predict')
+								 project=gee_project)
 
 	# Clean GFS data
-	gfs = pd.read_csv(os.path.join(download_dir, filepath))
+	gfs_path = Path(download_dir) / filepath
+	gfs = pd.read_csv(gfs_path)
 	gfs_clean = clean_gfs(gfs)
 
 	# Create prediction dataframe

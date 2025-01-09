@@ -24,6 +24,7 @@ timezonefinder = "^6.5.7"
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
 seaborn = "^0.13.2"
+mapclassify = "^2.8.1"
 
 [build-system]
 requires = ["poetry-core"]

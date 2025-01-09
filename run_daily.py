@@ -46,7 +46,6 @@ def run_daily_inference(pond_metadata: gpd.GeoDataFrame,
 												models_filepath: str, # Maybe will actually be dataset, which then indexes models.
 												target_date: Union[int, str] = 'tomorrow',
 												times_of_day: List[str] = ['09:00:00', '16:00:00'],
-												forecast_times: List[int] = [3, 9, 15, 36, 0, -12, -36, -60],
 												download_dir: str = 'data/gcs',
 												bucket: str = 'fwi-predict',
 												project: str = 'fwi-water-quality-sensing') -> gpd.GeoDataFrame:
@@ -60,14 +59,13 @@ def run_daily_inference(pond_metadata: gpd.GeoDataFrame,
 	filename = os.path.splitext(os.path.basename(models_filepath))[0] + '_' + target_date + '.csv'
 	description = f'daily_inference_{target_date}'
 
-	# Creat export and wait until it resolves.
-	predict_samples = create_standard_dataset(predict_samples,
-																			forecast_times,
-																			filename,
-																			download_dir,
-																			description,
-																			bucket=bucket,
-																			gee_project=project)
+	# Creat pre
+	predict_df = create_standard_dataset(predict_samples,
+																			 filename,
+																			 download_dir,
+																			 description,
+																			 bucket=bucket,
+																			 gee_project=project)
 	
 	# After this you should save the final data, load the model, and make predictions.
 	# Then write the streamlit app to display the results.
