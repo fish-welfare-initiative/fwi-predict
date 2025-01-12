@@ -28,32 +28,17 @@ def clean_gfs(raw_gfs: pd.DataFrame) -> pd.DataFrame:
 	gfs = gfs[front_cols + [col for col in gfs.columns if col not in front_cols]]
 	gfs = gfs.sort_values(['sample_idx', 'forecast_time'])
 
-	# Pivot wide so one observation per measurement
-	gfs_wide = gfs.pivot(index='sample_idx', columns='forecast_time')
+	# Pivot wide to one observation per measurement
+	value_cols = gfs.columns[~gfs.columns.isin(front_cols)].tolist()
+	gfs_wide = gfs.pivot(index='sample_idx', columns='forecast_time', values=value_cols)
 	gfs_wide.columns = gfs_wide.columns.map('{0[0]}_{0[1]}'.format)
 
 	return gfs_wide
 
 
-def merge_samples_and_gfs(samples: pd.DataFrame,
-					  			 				gfs_data: pd.DataFrame) -> pd.DataFrame:
-	"""Create Dataframe for prediction from samples and GFS data."""
-	predict_df = samples.set_index('sample_idx').join(gfs_data)
-
-	# Add time categoricals
-	predict_df['month'] = predict_df['sample_dt'].dt.month
-	predict_df['week_of_month'] = predict_df['sample_dt'].dt.isocalendar().week
-	predict_df['day_of_week'] = predict_df['sample_dt'].dt.dayofweek
-
-	# Line below will likely have to chagne
-	predict_df['morning'] = predict_df['sample_dt'].dt.hour < 12
-
-	return predict_df
-
-
 def create_standard_dataset(samples: gpd.GeoDataFrame,
-														filepath: Union[str, Path],
-														download_dir: str,
+														gfs_gcs_filepath: Union[str, Path],
+														gfs_download_dir: str,
 														description: str,
 														gcs_bucket: str = 'fwi-predict',
 														gee_project: str = 'fwi-water-quality-sensing') -> pd.DataFrame:
@@ -64,7 +49,7 @@ def create_standard_dataset(samples: gpd.GeoDataFrame,
 	# Creat export and wait until it resolves.
 	task = export_forecasts_for_samples(samples,
 									 										FORECAST_TIMES,
-																			filepath,
+																			gfs_gcs_filepath,
 																			description=description,
 																			bucket=gcs_bucket,
 																			project=gee_project)
@@ -77,16 +62,22 @@ def create_standard_dataset(samples: gpd.GeoDataFrame,
 	# Download exported data from GCS
 	## Consider using gsutil command line instead as it can multithread downloads
 	download_files(bucket=gcs_bucket,
-								 file_glob=filepath,
-								 download_dir=download_dir,
+								 file_glob=gfs_gcs_filepath,
+								 download_dir=gfs_download_dir,
 								 project=gee_project)
 
 	# Clean GFS data
-	gfs_path = Path(download_dir) / filepath
+	gfs_path = Path(gfs_download_dir) / gfs_gcs_filepath
 	gfs = pd.read_csv(gfs_path)
 	gfs_clean = clean_gfs(gfs)
 
 	# Create prediction dataframe
-	predict_df = merge_samples_and_gfs(samples, gfs_clean)
+	predict_df = samples.set_index('sample_idx').join(gfs_clean)
+
+	# Add time categoricals
+	predict_df['morning'] = predict_df['sample_dt'].dt.hour < 12
+	predict_df['month'] = predict_df['sample_dt'].dt.month
+	predict_df['week_of_month'] = predict_df['sample_dt'].dt.isocalendar().week
+	predict_df['day_of_week'] = predict_df['sample_dt'].dt.dayofweek
 
 	return predict_df

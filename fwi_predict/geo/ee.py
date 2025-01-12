@@ -66,7 +66,7 @@ def get_time_distance(
 	image: ee.Image,
 	reference_date: Union[datetime.datetime, pd.Timestamp, ee.Date],
 	property_name: str = "hours_from_date",
-	unit: Literal['second', 'minute', 'hour', 'day', 'month', 'year'] = 'hour',
+	unit: Literal['second', 'minute', 'hour', 'day', 'month', 'year'] = 'hour'
 ) -> ee.Image:
 	"""Calculate time distance between EE image date property and a reference date.
 	
@@ -89,7 +89,9 @@ def get_time_distance(
 	)
 
 
-def get_nearest_sentinel2_image(feature: ee.Feature, forward_days: int = 0, back_days: int = 10):
+def get_nearest_sentinel2_image(feature: ee.Feature,
+																forward_days: int = 0,
+																back_days: int = 10) -> ee.Image:
 	"""Add docstring.
      
   Can generalize to be non sentinel later. 
@@ -109,7 +111,6 @@ def get_nearest_sentinel2_image(feature: ee.Feature, forward_days: int = 0, back
 			
 	# Return the nearest image if available.
 	return ee.Image(collection.first())
-
 
 
 def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
@@ -169,9 +170,9 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 		"""Get most recent forecast for a given forecast time."""
     # Get frecast for specific time of interest
 		subset = forecast_subset \
-      .filter(ee.Filter.lt('creation_time', forecast_time)) \
-      .filter(ee.Filter.eq('forecast_time', forecast_time)) # Less than in first so we get all datapoints.
-   
+			.filter(ee.Filter.lt('creation_time', forecast_time)) \
+			.filter(ee.Filter.eq('forecast_time', forecast_time))
+      
     # Then get most recent forecast
 		latest_init_time = subset.aggregate_array('creation_time').sort().get(-1)
 	
@@ -276,15 +277,14 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 	samples_ee = gdf_to_ee(samples)
 	samples_ee = samples_ee.map(lambda f: f.set('sample_dt', ee.Date(f.get('sample_dt'))))
 
-	# Get GFS forecast
 	forecast_coll = samples_ee \
 		.map(lambda f: get_sample_gfs_forecast(f, forecast_times)) \
 		.flatten()
 	
-	# Remove file extension if present.
+	# Format filepath
 	fp = Path(filepath)
-	fp = fp.parent / fp.stem
-	fp = fp.as_posix()
+	fp = fp.parent / fp.stem # Remove file extension if present.
+	fp = fp.as_posix() # Format as POSIX filepath
 
 	# Export GFS forecast
 	task = ee.batch.Export.table.toCloudStorage(
@@ -295,6 +295,7 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 		fileFormat='CSV'
 	)
 	task.start()
-	print(f"Exporting GFS forecast data to {bucket}/{fp}.\nVisit https://code.earthengine.google.com/tasks to monitor the export.")
+	print(f"Exporting GFS forecast data to {bucket}/{fp + '.csv'}.\n"
+			   "Visit https://code.earthengine.google.com/tasks to monitor the export.")
 	
 	return task
