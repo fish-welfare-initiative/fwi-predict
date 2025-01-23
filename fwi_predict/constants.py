@@ -1,4 +1,4 @@
-# Project-wide constants
+"""Project-wide constants."""
 
 TIMEZONE = 'Asia/Kolkata'
 

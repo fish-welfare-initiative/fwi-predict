@@ -1,7 +1,7 @@
-import ee
 from pathlib import Path
 from typing import Union
 
+import ee
 import geopandas as gpd
 import pandas as pd
 
