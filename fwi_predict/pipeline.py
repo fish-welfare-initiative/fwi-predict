@@ -77,7 +77,7 @@ def create_standard_dataset(samples: gpd.GeoDataFrame,
 	# Add time categoricals
 	predict_df['morning'] = predict_df['sample_dt'].dt.hour < 12
 	predict_df['month'] = predict_df['sample_dt'].dt.month
-	predict_df['week_of_month'] = predict_df['sample_dt'].dt.isocalendar().week
+	predict_df['week_of_month'] = (predict_df['sample_dt'].dt.day - 1) // 7 + 1
 	predict_df['day_of_week'] = predict_df['sample_dt'].dt.dayofweek
 
 	return predict_df

@@ -15,10 +15,10 @@ prophet = "^1.1.6"
 yellowbrick = "^1.5"
 streamlit = "^1.41.1"
 ydata-profiling = "^4.12.1"
-autogluon-tabular = "^1.2"
 setuptools = "^75.6.0"
 plyer = "^2.1.0"
 timezonefinder = "^6.5.7"
+autogluon-tabular = {extras = ["all"], version = "^1.2"}
 
 
 [tool.poetry.group.dev.dependencies]

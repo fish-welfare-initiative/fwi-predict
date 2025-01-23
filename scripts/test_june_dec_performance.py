@@ -96,8 +96,8 @@ def main(re_export):
         print(f"Warning: Extra features will be ignored: {extra_features}")
 
     # Predict and store
-    X = X[model_features]  # Reorder columns to match model's expected order
-    preds = pd.Series(encoder.inverse_transform(model.predict(X)), index=sample_idx)
+    X_temp = X[model_features]  # Reorder columns to match model's expected order
+    preds = pd.Series(encoder.inverse_transform(model.predict(X_temp)), index=sample_idx)
     results_df[f"{target}_pred"] = results_df.index.map(preds)
 
   outpath = Path("./output").resolve() / "trial" / "testing_data_jun_dec_results.csv"
@@ -106,4 +106,4 @@ def main(re_export):
 
 
 if __name__ == "__main__":
-    main()
+  main()
