@@ -114,10 +114,10 @@ def get_nearest_sentinel2_image(feature: ee.Feature,
 
 
 def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
-	"""Check for Earth Engine export completion.
+	"""Check for Earth Engine task completion.
 	
 	Args:
-		task: an Earth Engine export task.
+		task: an Earth Engine task task.
 		check_interval: check status interval (in seconds).
 
 	Returns:
@@ -127,13 +127,13 @@ def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
 		status = task.status()
 		state = status['state']
 		if state == 'COMPLETED':
-			print('Data export completed successfully.')
+			print('Task completed.')
 			return True
 		elif state == 'FAILED':
-			print('Data export failed.')
+			print('Task failed.')
 			return False
 		elif state in ['CANCELLED', 'CANCEL_REQUESTED']:
-			print('Data export was cancelled.')
+			print('Task was cancelled.')
 			return False
 		else:
 			time.sleep(check_interval)
