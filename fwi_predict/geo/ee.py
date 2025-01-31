@@ -57,9 +57,7 @@ def scale_sentinel2_l2a(image: ee.Image) -> ee.Image :
 	
 	scaled_bands = ee.Image([scale_band(band) for band in scale_factors.keys()])
 
-	return image.addBands(
-		scaled_bands, overwrite=True
-	)
+	return image.addBands(scaled_bands, overwrite=True)
 
 
 def get_time_distance(
@@ -146,23 +144,21 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	if gfs is None:
 		gfs = get_gfs()
 
-
 	# Get times for which we want forecasts.
 	sample_idx = sample.get('sample_idx') # Get sample index
 	sample_dt = ee.Date(sample.get('sample_dt'))
 	day_prior = sample_dt \
-    .advance(5.5, 'hour') \
     .advance(-1, 'day') \
-    .update(hour=0, minute=0, second=0) #Have to adjust for Asia/Kolkata timezone before finding previous day.
+    .update(hour=0, minute=0, second=0)
   
 	forecast_time_list = ee.List(forecast_times).map(
-    lambda hours: day_prior.advance(hours, 'hour').advance(-6, 'hour').millis() # Again adjusting for timezone so forecasts don't overlap with sample time
+    lambda hours: day_prior.advance(hours, 'hour').advance(-6, 'hour').millis() # Adjusting for IST timezone
   )
 
   # Pre-filter GFS to reduce computation
 	forecast_subset = gfs.filterDate( 
-    ee.Date(forecast_time_list.sort().getNumber(0)).advance(-1, 'day'), # Earliest forecast initialization time we are interested in 
-    sample_dt.advance(-1, 'day') # Want forecasts initialized one day before sample was taken.
+    ee.Date(forecast_time_list.sort().getNumber(0)).advance(-1.5, 'day'), # Earliest forecast initialization time we are interested in.
+    day_prior # Want forecasts initialized one day before sample was taken (5:30am IST)
   )
 
   # Get latest forecast for each forecast (that is at least one day older than sample time)
@@ -183,7 +179,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	forecasts_for_times = ee.ImageCollection(
     forecast_time_list.map(get_latest_forecast_for_time)
   )
-
+	
   # Assign metadata to forecast values and cumulative values
 	forecast_values = forecasts_for_times \
     .map(lambda img: img.sample(sample.geometry())) \
@@ -201,7 +197,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 			ee.List(forecast_times).get(forecast_values_list.indexOf(f))))
 	)
 
-    # Get forecast at time of sample
+  # Get forecast at time of sample
 	sample_dt_rounded = sample_dt \
     .millis() \
     .divide(1000 * 60 * 60) \
@@ -221,19 +217,18 @@ def get_sample_gfs_forecast(sample: ee.Feature,
     .set('sample_idx', sample_idx)
 
   # Get cumulative values for the week prior to the sample time
-  # 9 AM UTC is 3:30 PM IST
 	def get_cumulative_history(lookback_days: ee.Number) -> ee.FeatureCollection:
 		"""Get cumulative history for a given number of days."""
 		cum_days = ee.List.sequence(0, ee.Number(lookback_days).multiply(-1), step=-1)
 		gfs_subset = gfs.filterDate(
-      day_prior.advance(ee.Number(cum_days.sort().get(0)).subtract(1), 'day'),
+      day_prior.advance(cum_days.sort().getNumber(0).subtract(1), 'day'),
       sample_dt
     )
 
     # Ought to check that you are summing correct number of days for each
 		global_history = ee.ImageCollection(
       cum_days
-      .map(lambda day: day_prior.advance(day, 'day').update(hour=9).millis())
+      .map(lambda day: day_prior.advance(day, 'day').update(hour=9).millis()) # 15:30 IST
       .map(lambda f_time: gfs_subset.filter(ee.Filter.eq('forecast_time', f_time)).sort('creation_time', False).first())
     )
 		global_aggregate = global_history.reduce(ee.Reducer.sum())
@@ -246,6 +241,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 		
 		return cum_values
   
+	
 	three_day_history = get_cumulative_history(3)
 	week_history = get_cumulative_history(7)
 
@@ -274,8 +270,7 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 	ee.Initialize(project=project)
 
 	# Export GFS data
-	samples_ee = gdf_to_ee(samples)
-	samples_ee = samples_ee.map(lambda f: f.set('sample_dt', ee.Date(f.get('sample_dt'))))
+	samples_ee = gdf_to_ee(samples, date='sample_dt', date_format="yyyy-MM-dd'T'HH:mm:ssZ")
 
 	forecast_coll = samples_ee \
 		.map(lambda f: get_sample_gfs_forecast(f, forecast_times)) \

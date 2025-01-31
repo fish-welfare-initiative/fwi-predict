@@ -27,4 +27,4 @@ WQ_RANGES = {
     }
 }
 
-FORECAST_TIMES = [3, 9, 15, 36, 0, -12, -36, -60]
+FORECAST_TIMES = [8, 15, 21, 33, 39, -9, -33]
