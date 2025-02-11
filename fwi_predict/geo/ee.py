@@ -9,6 +9,7 @@ import geopandas as gpd
 import pandas as pd
 from geemap import gdf_to_ee
 
+from ..constants import TIMEZONE
 
 SENTINEL2_SCL_MAP = {
  	1: "Saturated/defective",
@@ -139,7 +140,8 @@ def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
 
 def get_sample_gfs_forecast(sample: ee.Feature,
 							              forecast_times: List,
-							              gfs: ee.ImageCollection = None) -> ee.FeatureCollection:
+							              gfs: ee.ImageCollection = None,
+														timezone: str = TIMEZONE) -> ee.FeatureCollection:
 	"""Add docstring."""
 	if gfs is None:
 		gfs = get_gfs()
@@ -188,6 +190,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
       .set('forecast_creation_dt', f.id().slice(0, 10)) # Same as below
       .set('forecast_hour', f.id().slice(11, 14)) # Would be good to make this less hacky
       .set('sample_idx', sample_idx)
+			.set('num_sum', 1)
     )
 	
 	# Map each element of forecast_time_list to each feature of forecast_values
@@ -198,12 +201,10 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	)
 
   # Get forecast at time of sample
-	sample_dt_rounded = sample_dt \
-    .millis() \
-    .divide(1000 * 60 * 60) \
-    .round() \
-    .multiply(1000 * 60 * 60) # Round sample time to nearest hour
-	sample_time_forecast = ee.Image(get_latest_forecast_for_time(sample_dt_rounded))
+	sample_dt_rounded = ee.Date(
+		sample_dt.millis().divide(1000 * 60 * 60).round().multiply(1000 * 60 * 60)
+	) # Round sample time to nearest hour
+	sample_time_forecast = ee.Image(get_latest_forecast_for_time(sample_dt_rounded.millis()))
 
 	id = sample_time_forecast.getString('system:id').split("/").getString(2)
 	sample_time_forecast = sample_time_forecast \
@@ -214,10 +215,11 @@ def get_sample_gfs_forecast(sample: ee.Feature,
     .set('forecast_creation_dt', id.slice(0, 10)) \
 		.set('forecast_hour', id.slice(11, 14)) \
     .set('forecast_time', 'sample') \
-    .set('sample_idx', sample_idx)
+    .set('sample_idx', sample_idx) \
+		.set('num_sum', 1)
 
-  # Get cumulative values for the week prior to the sample time
-	def get_cumulative_history(lookback_days: ee.Number) -> ee.FeatureCollection:
+  # Get cumulative values in days prior at fixed time
+	def get_daily_cum(lookback_days: ee.Number) -> ee.Feature:
 		"""Get cumulative history for a given number of days."""
 		cum_days = ee.List.sequence(0, ee.Number(lookback_days).multiply(-1), step=-1)
 		gfs_subset = gfs.filterDate(
@@ -237,13 +239,13 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 		cum_values = cum_values \
       .rename(cum_values.bandNames().map(lambda name: ee.String(name).slice(0, -4))) \
       .sample(sample.geometry()) \
-      .first() # Remove sum from end of band names
+      .first() \
+			.set('num_sum', global_history.size())
 		
 		return cum_values
-  
-	
-	three_day_history = get_cumulative_history(3)
-	week_history = get_cumulative_history(7)
+		
+	three_day_history = get_daily_cum(3)
+	week_history = get_daily_cum(7)
 
 	three_day_history = three_day_history \
     .set('sample_idx', sample_idx) \
@@ -252,9 +254,82 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	week_history = week_history \
     .set('sample_idx', sample_idx) \
     .set('forecast_time', 'seven_day_cum')
+	
+
+	# Get cumulative values over course of a day
+	def get_hourly_cum(cum_start: ee.Date, cum_end: ee.Date) -> ee.Feature:
+		"""Vibes.
+		
+		Args:
+			cum_start: start time. Must be rounded to an hour.
+			cum_end: time to end sum. Must be rounded to an hour.
+			
+		Returns:
+			Feature containing the sum of hourly forecasts.
+		"""
+		forecast_subset = gfs.filterDate( 
+			cum_start.advance(-4, 'day'),
+			day_prior # Want forecasts initialized one day before sample was taken (5:30am IST)
+		)
+
+		# Get hourly forecasts between start and end times
+		hourly_times = ee.List.sequence(
+			cum_start.millis(),
+			cum_end.millis(),
+			1000 * 60 * 60 # 1 hour steps
+		)
+
+		hourly_forecasts = ee.ImageCollection(
+			hourly_times.map(lambda f_time: forecast_subset
+				.filter(ee.Filter.eq('forecast_time', f_time))
+				.sort('creation_time', False)
+				.first()
+			)
+		)
+
+		# Sum values across all hours
+		hourly_aggregate = hourly_forecasts.reduce(ee.Reducer.sum())
+		hourly_values = ee.Image(hourly_aggregate)
+		hourly_values = hourly_values \
+			.rename(hourly_values.bandNames().map(lambda name: ee.String(name).slice(0, -4))) \
+			.sample(sample.geometry()) \
+			.first() \
+			.set('num_sum', hourly_forecasts.size())
+
+		return hourly_values
+
+
+	# Get sum of values up to sample time on day
+	cum_start = sample_dt_rounded.update(hour=0, minute=30, second=0, timeZone=timezone) # Offset due to Indian timezone.
+	same_day_sums = get_hourly_cum(cum_start, sample_dt_rounded)
+	
+	same_day_sums = same_day_sums \
+		.set('sample_idx', sample_idx) \
+		.set('forecast_time', 'same_day_sum')
+
+	# Get sum of values over previous day
+	cum_start = sample_dt_rounded \
+		.advance(-1, 'day') \
+		.update(hour=0, minute=30, second=0, timeZone=timezone)
+	cum_end = cum_start.advance(1, 'day')
+	before_day_sums = get_hourly_cum(cum_start, cum_end)
+
+	before_day_sums = before_day_sums \
+		.set('sample_idx', sample_idx) \
+		.set('forecast_time', 'before_day_sum')
 
   # Merge and return
-	forecast_values = forecast_values.merge(ee.FeatureCollection([sample_time_forecast, three_day_history, week_history]))
+	forecast_values = forecast_values.merge(
+		ee.FeatureCollection(
+			[
+				sample_time_forecast,
+				three_day_history,
+				week_history,
+				same_day_sums,
+				before_day_sums
+			]
+		)
+	)
   
 	return forecast_values
 

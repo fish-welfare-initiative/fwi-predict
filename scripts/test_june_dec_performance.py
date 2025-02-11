@@ -78,13 +78,15 @@ def main(re_export):
   for target in targets:
     model_dir = Path("./models").resolve() / "measurements_with_metadata_simple" / target
 
+    #Load encoder
+    with open(model_dir / "encoder.pkl", 'rb') as f:
+      encoder = pickle.load(f)
+
     # Load model
-    for model_name in['Random Forest', 'Gradient Boosting']:
+    model_names = [file.stem for file in model_dir.iterdir() if file.stem != 'encoder']
+    for model_name in model_names:
       with open(model_dir / f"{model_name}.pkl", 'rb') as f:
         model = pickle.load(f)
-
-      with open(model_dir / "encoder.pkl", 'rb') as f:
-        encoder = pickle.load(f)
       
       # Check that X has all required features in correct order
       model_features = model.feature_names_in_
@@ -96,10 +98,11 @@ def main(re_export):
           print(f"Warning: Extra features will be ignored: {extra_features}")
 
       # Predict and store
-      X_temp = X[model_features]  # Reorder columns to match model's expected order
-      preds = pd.Series(encoder.inverse_transform(model.predict(X_temp)), index=sample_idx)
-      var_name = f"{target}_pred_{model_name.lower().replace(' ', '_')}"
-      results_df[var_name] = results_df['sample_idx'].map(preds)
+      probs = model.predict_proba(X[model_features])
+      for i, class_name in enumerate(encoder.classes_):
+          var_name = f"{target}_{class_name}_{model_name.lower().replace(' ', '_')}"
+          preds = pd.Series(probs[:, i], index=sample_idx)
+          results_df[var_name] = results_df['sample_idx'].map(preds)
 
   outpath = Path("./output").resolve() / "trial" / "testing_data_jun_dec_results.csv"
   outpath.parent.mkdir(parents=True, exist_ok=True)

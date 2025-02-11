@@ -7397,4 +7397,4 @@ scipy = ">=1.0.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.7"
-content-hash = "8b099551e72f569e6b1c093fdd88b62643fe4f81b168eb0864c3eedd821cd114"
+content-hash = "b4974fbdd0fc8cdf161fd918f3b2e1a5ffb083ab9e8e53d65cc35549bfe23f7c"

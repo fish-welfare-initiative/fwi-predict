@@ -72,7 +72,7 @@ def create_standard_dataset(samples: gpd.GeoDataFrame,
 	gfs_clean = clean_gfs(gfs)
 
 	# Create prediction dataframe
-	predict_df = samples.set_index('sample_idx').join(gfs_clean)
+	predict_df = samples.set_index('sample_idx').join(gfs_clean).reset_index()
 
 	# Add time categoricals
 	predict_df['hour'] = predict_df['sample_dt'].dt.hour
