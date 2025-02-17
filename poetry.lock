@@ -5690,6 +5690,25 @@ testing = ["h5py (>=3.7.0)", "huggingface-hub (>=0.12.1)", "hypothesis (>=6.70.2
 torch = ["safetensors[numpy]", "torch (>=1.10)"]
 
 [[package]]
+name = "scikit-base"
+version = "0.12.0"
+description = "Base classes for sklearn-like parametric objects"
+optional = false
+python-versions = "<3.14,>=3.9"
+files = [
+    {file = "scikit_base-0.12.0-py3-none-any.whl", hash = "sha256:a0679305131ac4753ff6ee72877f831bc68597b7884feede0ab4b32ff520e018"},
+    {file = "scikit_base-0.12.0.tar.gz", hash = "sha256:2f801a149dda944481f327f5b3c6137aa53dc6974d097b086cfbba107034a7fe"},
+]
+
+[package.extras]
+all-extras = ["numpy", "pandas"]
+binder = ["jupyter"]
+dev = ["pre-commit", "pytest", "pytest-cov", "scikit-learn (>=0.24.0)"]
+docs = ["Sphinx (!=7.2.0,<9.0.0)", "jupyter", "myst-parser", "nbsphinx (>=0.8.6)", "numpydoc", "pydata-sphinx-theme", "sphinx-design (<0.7.0)", "sphinx-gallery (<0.19.0)", "sphinx-issues (<6.0.0)", "sphinx-panels", "tabulate"]
+linters = ["black", "doc8", "flake8", "flake8-bugbear", "flake8-builtins", "flake8-comprehensions", "flake8-print", "flake8-quotes", "isort", "mypy", "nbqa", "pandas-vet", "pep8-naming", "pydocstyle"]
+test = ["coverage", "numpy", "pandas", "pytest", "pytest-cov", "safety", "scikit-learn (>=0.24.0)", "scipy"]
+
+[[package]]
 name = "scikit-learn"
 version = "1.5.2"
 description = "A set of python modules for machine learning and data mining"
@@ -5935,6 +5954,53 @@ files = [
     {file = "six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"},
     {file = "six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"},
 ]
+
+[[package]]
+name = "sktime"
+version = "0.36.0"
+description = "A unified framework for machine learning with time series"
+optional = false
+python-versions = "<3.14,>=3.9"
+files = [
+    {file = "sktime-0.36.0-py3-none-any.whl", hash = "sha256:f5941a3575ac7ae8a180bf26405b697b3fe76690d79a6156492a3519f4409e67"},
+    {file = "sktime-0.36.0.tar.gz", hash = "sha256:7433b44852e624800978c15c0506f516d7f99947d3baa67e5aeca282ef708674"},
+]
+
+[package.dependencies]
+joblib = ">=1.2.0,<1.5"
+numpy = ">=1.21,<2.3"
+packaging = "*"
+pandas = ">=1.1,<2.3.0"
+scikit-base = ">=0.6.1,<0.13.0"
+scikit-learn = ">=0.24,<1.7.0"
+scipy = ">=1.2,<2.0.0"
+
+[package.extras]
+alignment = ["dtaidistance (<2.4)", "dtw-python (>=1.3,<1.6)", "numba (>=0.53,<0.62)"]
+all-extras = ["arch (>=5.6,<7.1.0)", "autots (>=0.6.1,<0.7)", "cloudpickle", "dash (!=2.9.0)", "dask (<2024.8.1)", "dtaidistance (<2.4)", "dtw-python", "esig (==0.9.7)", "filterpy (>=1.4.5)", "gluonts (>=0.9)", "h5py", "hmmlearn (>=0.2.7)", "holidays", "keras-self-attention", "matplotlib (>=3.3.2,!=3.9.1)", "mne", "numba (>=0.53,<0.62)", "optuna (<4.3)", "pmdarima (>=1.8,!=1.8.1,<3.0.0)", "polars[pandas] (>=0.20,<2.0)", "prophet (>=1.1)", "pycatch22 (<0.4.6)", "pyod (>=0.8)", "pyts (<0.14.0)", "scikit-optimize", "scikit_posthocs (>=0.6.5)", "seaborn (>=0.11)", "seasonal", "skforecast (>=0.12.1,<0.15)", "skpro (>=2,<2.10.0)", "statsforecast (>=1.0.0,<2.1.0)", "statsmodels (>=0.12.1)", "stumpy (>=1.5.1)", "tbats (>=1.1)", "temporian (>=0.7.0,!=0.8.0,<0.9.0)", "tensorflow (>=2,<2.17)", "tsfresh (>=0.17)", "tslearn (>=0.5.2,!=0.6.0,<0.7.0)", "u8darts (>=0.29.0,<0.32.0)", "xarray"]
+all-extras-pandas2 = ["arch (>=5.6,<7.1.0)", "autots (>=0.6.1,<0.7)", "cloudpickle", "dash (!=2.9.0)", "dask (<2025.1.1)", "dtaidistance (<2.4)", "dtw-python", "esig (==0.9.7)", "filterpy (>=1.4.5)", "gluonts (>=0.9)", "h5py", "hmmlearn (>=0.2.7)", "holidays", "keras-self-attention", "matplotlib (>=3.3.2,!=3.9.1)", "mne", "numba (>=0.53,<0.62)", "optuna (<4.3)", "pmdarima (>=1.8,!=1.8.1,<3.0.0)", "polars[pandas] (>=0.20,<2.0)", "prophet (>=1.1)", "pycatch22 (<0.4.6)", "pyod (>=0.8)", "scikit_posthocs (>=0.6.5)", "seaborn (>=0.11)", "seasonal", "skforecast (>=0.12.1,<0.15)", "skpro (>=2,<2.10.0)", "statsforecast (>=1.0.0,<2.1.0)", "statsmodels (>=0.12.1)", "stumpy (>=1.5.1)", "tbats (>=1.1)", "temporian (>=0.7.0,!=0.8.0,<0.9.0)", "tensorflow (>=2,<2.17)", "tsbootstrap (>=0.1.0,<0.2)", "tsfresh (>=0.17)", "tslearn (>=0.5.2,!=0.6.0,<0.7.0)", "u8darts (>=0.29.0,<0.32.0)", "xarray"]
+annotation = ["hmmlearn (>=0.2.7,<0.4)", "numba (>=0.53,<0.62)", "pyod (>=0.8,<1.2)"]
+binder = ["jupyter", "pandas (<2.0.0)", "skchange"]
+classification = ["esig (>=0.9.7,<0.10)", "numba (>=0.53,<0.62)", "tensorflow (>=2,<2.17)", "tsfresh (>=0.17,<0.21)"]
+clustering = ["networkx (<3.5)", "numba (>=0.53,<0.62)", "ts2vg (<1.3)", "tslearn (>=0.5.2,!=0.6.0,<0.7.0)"]
+compatibility-tests = ["catboost"]
+cython-extras = ["mrseql (<0.0.3)", "mrsqm", "numba (<0.62)"]
+dataframe = ["dask (<2024.8.1)", "dask (<2025.1.1)"]
+datasets = ["rdata", "requests"]
+detection = ["hmmlearn (>=0.2.7,<0.4)", "numba (>=0.53,<0.62)", "pyod (>=0.8,<1.2)"]
+dev = ["backoff", "httpx", "pre-commit", "pytest", "pytest-randomly", "pytest-timeout", "pytest-xdist", "wheel"]
+dl = ["FrEIA", "einops (>0.7.0)", "gluonts (>=0.14.3)", "huggingface-hub (>=0.23.0)", "hydra-core", "lightning (>=2.0)", "neuralforecast (>=1.6.4,<1.8.0)", "peft (>=0.10.0,<0.14.0)", "pykan (>=0.2.1,<0.2.9)", "pytorch-forecasting (>=1.0.0,<1.2.0)", "tensorflow (>=2,<2.17)", "torch", "transformers[torch] (<4.41.0)"]
+docs = ["Sphinx (!=7.2.0,<9.0.0)", "jupyter", "myst-parser", "nbsphinx (>=0.8.6)", "numpydoc", "pydata-sphinx-theme", "sphinx-copybutton", "sphinx-design (<0.7.0)", "sphinx-gallery (<0.19.0)", "sphinx-issues (<6.0.0)", "tabulate"]
+forecasting = ["arch (>=5.6,<7.1)", "autots (>=0.6.1,<0.7)", "pmdarima (>=1.8,!=1.8.1,<2.1)", "prophet (>=1.1,<1.2)", "skforecast (>=0.12.1,<0.15)", "skpro (>=2,<2.10.0)", "statsforecast (>=1.0.0,<2.1.0)", "statsmodels (>=0.12.1,<0.15)", "tbats (>=1.1,<1.2)"]
+mlflow = ["mlflow"]
+mlflow-tests = ["boto3", "botocore", "mlflow", "moto"]
+networks = ["keras-self-attention (>=0.51,<0.52)", "tensorflow (>=2,<2.17)"]
+numpy1 = ["numpy (<2.0.0)"]
+pandas1 = ["pandas (<2.0.0)"]
+param-est = ["seasonal (>=0.3.1,<0.4)", "statsmodels (>=0.12.1,<0.15)"]
+regression = ["numba (>=0.53,<0.62)", "tensorflow (>=2,<2.17)"]
+tests = ["pytest (>=7.4,<8.4)", "pytest-randomly (>=3.15,<3.17)", "pytest-timeout (>=2.1,<2.4)", "pytest-xdist (>=3.3,<3.7)"]
+transformations = ["esig (>=0.9.7,<0.10)", "filterpy (>=1.4.5,<1.5)", "holidays (>=0.29,<0.59)", "mne (>=1.5,<1.9)", "numba (>=0.53,<0.62)", "pycatch22 (>=0.4,<0.4.6)", "statsmodels (>=0.12.1,<0.15)", "stumpy (>=1.5.1,<1.13)", "temporian (>=0.7.0,!=0.8.0,<0.9.0)", "tsfresh (>=0.17,<0.21)"]
 
 [[package]]
 name = "smart-open"
@@ -7397,4 +7463,4 @@ scipy = ">=1.0.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12.7"
-content-hash = "b4974fbdd0fc8cdf161fd918f3b2e1a5ffb083ab9e8e53d65cc35549bfe23f7c"
+content-hash = "d0c2f0ac1abe17b059bf05ef676c3593c6839b7ea406718e9b0bf56aeacd74b1"

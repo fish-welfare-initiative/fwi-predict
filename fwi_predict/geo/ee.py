@@ -25,6 +25,24 @@ SENTINEL2_SCL_MAP = {
 	11: "Snow/ice"
 }
 
+SENTINEL2_DEFAULT_BANDS = {'B1': 'aerosols',
+                 'B2': 'blue',
+                 'B3': 'green',
+                 'B4': 'red',
+                 'B5': 'red_edge_1',
+                 'B6': 'red_edge_2',
+                 'B7': 'red_edge_3',
+                 'B8': 'NIR',
+                 'B8A': 'red_edge_4',
+                 'B9': 'water_vapor',
+                 'B11': 'swir_1',
+                 'B12': 'swir_2',
+                 'AOT': 'aot',
+								 'WVP': 'water_vapor_pressure',
+                 'SCL': 'scene_classification',
+                 'MSK_CLDPRB': 'cloud_probability'}
+
+
 def get_sentinel2_l2a() -> ee.ImageCollection: 
 	"""Returns Sentinel-2 image collection."""
 	return ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
@@ -369,3 +387,24 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 			   "Visit https://code.earthengine.google.com/tasks to monitor the export.")
 	
 	return task
+
+
+def get_sentinel2_values_at_feature(feature: ee.Feature) -> ee.Feature:
+  """Write docstring later."""
+  nearest_image = get_nearest_sentinel2_image(feature)
+
+  # Select bands of interest and add vegetation indices
+  nearest_image = scale_sentinel2_l2a(nearest_image)
+  nearest_image = nearest_image.select(list(SENTINEL2_DEFAULT_BANDS.keys()))
+  nearest_image = nearest_image.addBands([
+    nearest_image.normalizedDifference(['B8', 'B4']).rename("ndvi"),
+    nearest_image.normalizedDifference(['B3', 'B8']).rename('ndwi')
+  ])
+
+  values = nearest_image \
+    .sample(feature.geometry()) \
+    .first() \
+    .set('sample_idx', feature.get('sample_idx')) \
+    .set('hours_from_measurement', nearest_image.get('hours_from_date'))
+
+  return values
