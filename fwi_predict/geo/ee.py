@@ -9,7 +9,7 @@ import geopandas as gpd
 import pandas as pd
 from geemap import gdf_to_ee
 
-from ..constants import TIMEZONE
+from ..constants import TZ_STRING
 
 SENTINEL2_SCL_MAP = {
  	1: "Saturated/defective",
@@ -159,7 +159,7 @@ def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
 def get_sample_gfs_forecast(sample: ee.Feature,
 							              forecast_times: List,
 							              gfs: ee.ImageCollection = None,
-														timezone: str = TIMEZONE) -> ee.FeatureCollection:
+														timezone: str = TZ_STRING) -> ee.FeatureCollection:
 	"""Add docstring."""
 	if gfs is None:
 		gfs = get_gfs()

@@ -6,7 +6,7 @@ import click
 import geopandas as gpd
 import pandas as pd
 
-from fwi_predict.constants import TIMEZONE
+from fwi_predict.constants import TZ_STRING
 from fwi_predict.pipeline import create_standard_dataset
 
 @click.command()
@@ -19,7 +19,7 @@ def main(re_export):
     measurements['Date of data collection'].dt.strftime('%Y-%m-%d') + ' ' + 
     measurements['Time of data collection'].astype(str)
   )
-  measurements['sample_dt'] = measurements['sample_dt'].dt.tz_localize(TIMEZONE)
+  measurements['sample_dt'] = measurements['sample_dt'].dt.tz_localize(TZ_STRING)
   measurements['sample_idx'] = pd.Series(range(len(measurements)))
 
   measurements = measurements \

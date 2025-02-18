@@ -1,6 +1,6 @@
 """Project-wide constants."""
 
-TIMEZONE = 'Asia/Kolkata'
+TZ_STRING = 'Asia/Kolkata'
 
 WQ_RANGES = {
     'do_mg_per_L': {
