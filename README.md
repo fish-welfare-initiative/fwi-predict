@@ -27,7 +27,7 @@ Poetry is our package manager - it helps install and manage all the Python libra
    ```
 
 ### Google Cloud Setup
-Google Cloud provides the computing power we need for processing large amounts of satellite data.
+We mostly use Google Cloud as part of our remote sensing data export pipeline. It may be useful for data storage further down the road.
 
 1. Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 2. Initialize the SDK and authenticate:
