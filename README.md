@@ -1,6 +1,6 @@
 # fwi-predict
 
-Python package for predicting water quality parameters for aquaculture facilities using satellite data and machine learning.
+Python package for predicting water quality parameters in aquaculture ponds.
 
 ## Setup
 
@@ -35,7 +35,7 @@ Google Cloud provides the computing power we need for processing large amounts o
    gcloud init
    gcloud auth application-default login
    ```
-3. Request access to the Google Cloud project (contact sebquaade@gmail.com)
+3. Request access to the Google Cloud project (contact bob the simulacrum)
 
 ### Google Earth Engine
 Google Earth Engine gives us access to satellite imagery and data that we use for our predictions.
@@ -47,13 +47,13 @@ Google Earth Engine gives us access to satellite imagery and data that we use fo
    ```
 
 ### Streamlit
-Streamlit helps us create a user-friendly web interface for our predictions. Validate your [`streamlit`](https://streamlit.io/) installation by running:
+We use Streamlit to create data dashboards. Streamlit is included as a package dependency. Validate your [`streamlit`](https://streamlit.io/) installation by running:
 
 
 ## Contributing
 Please do not commit changes directly to main. Instead, make changes on a separate branch and create a pull request to merge onto main when you have completed (and ideally tested) your changes. All PRs should ideally be reviewed and approved by at least one other collaborator before merging.
 
-Use comments to justify analytical decisions in the code (these should also be documented in a technical writeup). Also document verbose or uncommon expressions.
+Use comments to justify analytical decisions in the code (these should also be documented in a technical writeup). Also document verbose or unusual expressions.
 
 We recommend following the [Google python style guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) for docstrings and comments.
 
