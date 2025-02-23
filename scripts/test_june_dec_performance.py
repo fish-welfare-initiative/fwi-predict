@@ -6,7 +6,7 @@ import click
 import geopandas as gpd
 import pandas as pd
 
-from fwi_predict.constants import TIMEZONE
+from fwi_predict.constants import TZ_STRING
 from fwi_predict.pipeline import create_standard_dataset
 
 @click.command()
@@ -19,7 +19,8 @@ def main(re_export):
     measurements['Date of data collection'].dt.strftime('%Y-%m-%d') + ' ' + 
     measurements['Time of data collection'].astype(str)
   )
-  measurements['sample_dt'] = measurements['sample_dt'].dt.tz_localize(TIMEZONE)
+  measurements['sample_dt'] = measurements['sample_dt'].dt.tz_localize(TZ_STRING)
+  measurements['sample_idx'] = pd.Series(range(len(measurements)))
 
   measurements = measurements \
     .drop(columns=['Date of data collection', 'Time of data collection', 'Sr. No']) \
@@ -43,9 +44,7 @@ def main(re_export):
   no_geom_samples = samples[samples['geometry'].isna()].copy()
   print(f"Ponds without locations: {no_geom_samples['pond_id'].unique().tolist()}")
 
-  samples['sample_idx'] = pd.Series(range(len(samples)))
   samples = samples[samples['geometry'].notna()]
-
   assert(samples['geometry'].isna().sum() == 0)
 
   # Create feature df if it doesn't exist or reexport flag is True
@@ -66,11 +65,11 @@ def main(re_export):
     predict_df.to_csv(predict_df_path)
   else:
     print("Loading existing feature data.")
-    predict_df = pd.read_csv(predict_df_path, index_col='sample_idx')
+    predict_df = pd.read_csv(predict_df_path)
 
   # Create X frame
-  sample_idx = predict_df.index.copy() # Keep sample idx for later merge.
-  X = predict_df.drop(columns=['sample_dt', 'pond_id', 'geometry'])
+  sample_idx = predict_df['sample_idx'].copy() # Keep sample idx for later merge.
+  X = predict_df.drop(columns=['sample_dt', 'pond_id', 'geometry', 'sample_idx'])
 
   # Predict
   targets = ['do_in_range', 'ph_in_range', 'ammonia_in_range', 'turbidity_in_range']
@@ -79,26 +78,31 @@ def main(re_export):
   for target in targets:
     model_dir = Path("./models").resolve() / "measurements_with_metadata_simple" / target
 
-    # Load model
-    with open(model_dir / "model.pkl", 'rb') as f:
-      model = pickle.load(f)
-
+    #Load encoder
     with open(model_dir / "encoder.pkl", 'rb') as f:
       encoder = pickle.load(f)
-    
-    # Check that X has all required features in correct order
-    model_features = model.feature_names_in_
-    missing_features = set(model_features) - set(X.columns)
-    if missing_features:
-        raise ValueError(f"Missing required features: {missing_features}")
-    extra_features = set(X.columns) - set(model_features) 
-    if extra_features:
-        print(f"Warning: Extra features will be ignored: {extra_features}")
 
-    # Predict and store
-    X_temp = X[model_features]  # Reorder columns to match model's expected order
-    preds = pd.Series(encoder.inverse_transform(model.predict(X_temp)), index=sample_idx)
-    results_df[f"{target}_pred"] = results_df.index.map(preds)
+    # Load model
+    model_names = [file.stem for file in model_dir.iterdir() if file.stem != 'encoder']
+    for model_name in model_names:
+      with open(model_dir / f"{model_name}.pkl", 'rb') as f:
+        model = pickle.load(f)
+      
+      # Check that X has all required features in correct order
+      model_features = model.feature_names_in_
+      missing_features = set(model_features) - set(X.columns)
+      if missing_features:
+          raise ValueError(f"Missing required features: {missing_features}")
+      extra_features = set(X.columns) - set(model_features) 
+      if extra_features:
+          print(f"Warning: Extra features will be ignored: {extra_features}")
+
+      # Predict and store
+      probs = model.predict_proba(X[model_features])
+      for i, class_name in enumerate(encoder.classes_):
+          var_name = f"{target}_{class_name}_{model_name.lower().replace(' ', '_')}"
+          preds = pd.Series(probs[:, i], index=sample_idx)
+          results_df[var_name] = results_df['sample_idx'].map(preds)
 
   outpath = Path("./output").resolve() / "trial" / "testing_data_jun_dec_results.csv"
   outpath.parent.mkdir(parents=True, exist_ok=True)

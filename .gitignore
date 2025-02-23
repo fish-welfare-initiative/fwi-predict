@@ -1,4 +1,5 @@
 autogluon_do_in_range/
+*.html
 .python-version
 
 # Byte-compiled / optimized / DLL files

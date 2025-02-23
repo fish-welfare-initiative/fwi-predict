@@ -58,4 +58,4 @@ Use comments to justify analytical decisions in the code (these should also be d
 We recommend following the [Google python style guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) for docstrings and comments.
 
 ### FAQ
-Email `squaade@uchicago.edu`.
+Email bob the simulacrum.

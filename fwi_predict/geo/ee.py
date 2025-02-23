@@ -9,6 +9,7 @@ import geopandas as gpd
 import pandas as pd
 from geemap import gdf_to_ee
 
+from ..constants import TZ_STRING
 
 SENTINEL2_SCL_MAP = {
  	1: "Saturated/defective",
@@ -23,6 +24,24 @@ SENTINEL2_SCL_MAP = {
 	10: "Cirrus",
 	11: "Snow/ice"
 }
+
+SENTINEL2_DEFAULT_BANDS = {'B1': 'aerosols',
+                 'B2': 'blue',
+                 'B3': 'green',
+                 'B4': 'red',
+                 'B5': 'red_edge_1',
+                 'B6': 'red_edge_2',
+                 'B7': 'red_edge_3',
+                 'B8': 'NIR',
+                 'B8A': 'red_edge_4',
+                 'B9': 'water_vapor',
+                 'B11': 'swir_1',
+                 'B12': 'swir_2',
+                 'AOT': 'aot',
+								 'WVP': 'water_vapor_pressure',
+                 'SCL': 'scene_classification',
+                 'MSK_CLDPRB': 'cloud_probability'}
+
 
 def get_sentinel2_l2a() -> ee.ImageCollection: 
 	"""Returns Sentinel-2 image collection."""
@@ -57,9 +76,7 @@ def scale_sentinel2_l2a(image: ee.Image) -> ee.Image :
 	
 	scaled_bands = ee.Image([scale_band(band) for band in scale_factors.keys()])
 
-	return image.addBands(
-		scaled_bands, overwrite=True
-	)
+	return image.addBands(scaled_bands, overwrite=True)
 
 
 def get_time_distance(
@@ -114,10 +131,10 @@ def get_nearest_sentinel2_image(feature: ee.Feature,
 
 
 def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
-	"""Check for Earth Engine export completion.
+	"""Check for Earth Engine task completion.
 	
 	Args:
-		task: an Earth Engine export task.
+		task: an Earth Engine task task.
 		check_interval: check status interval (in seconds).
 
 	Returns:
@@ -127,13 +144,13 @@ def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
 		status = task.status()
 		state = status['state']
 		if state == 'COMPLETED':
-			print('Data export completed successfully.')
+			print('Task completed.')
 			return True
 		elif state == 'FAILED':
-			print('Data export failed.')
+			print('Task failed.')
 			return False
 		elif state in ['CANCELLED', 'CANCEL_REQUESTED']:
-			print('Data export was cancelled.')
+			print('Task was cancelled.')
 			return False
 		else:
 			time.sleep(check_interval)
@@ -141,28 +158,27 @@ def monitor_task(task: ee.batch.Task, check_interval: int = 60) -> bool:
 
 def get_sample_gfs_forecast(sample: ee.Feature,
 							              forecast_times: List,
-							              gfs: ee.ImageCollection = None) -> ee.FeatureCollection:
+							              gfs: ee.ImageCollection = None,
+														timezone: str = TZ_STRING) -> ee.FeatureCollection:
 	"""Add docstring."""
 	if gfs is None:
 		gfs = get_gfs()
-
 
 	# Get times for which we want forecasts.
 	sample_idx = sample.get('sample_idx') # Get sample index
 	sample_dt = ee.Date(sample.get('sample_dt'))
 	day_prior = sample_dt \
-    .advance(5.5, 'hour') \
     .advance(-1, 'day') \
-    .update(hour=0, minute=0, second=0) #Have to adjust for Asia/Kolkata timezone before finding previous day.
+    .update(hour=0, minute=0, second=0)
   
 	forecast_time_list = ee.List(forecast_times).map(
-    lambda hours: day_prior.advance(hours, 'hour').advance(-6, 'hour').millis() # Again adjusting for timezone so forecasts don't overlap with sample time
+    lambda hours: day_prior.advance(hours, 'hour').advance(-6, 'hour').millis() # Adjusting for IST timezone
   )
 
   # Pre-filter GFS to reduce computation
 	forecast_subset = gfs.filterDate( 
-    ee.Date(forecast_time_list.sort().getNumber(0)).advance(-1, 'day'), # Earliest forecast initialization time we are interested in 
-    sample_dt.advance(-1, 'day') # Want forecasts initialized one day before sample was taken.
+    ee.Date(forecast_time_list.sort().getNumber(0)).advance(-1.5, 'day'), # Earliest forecast initialization time we are interested in.
+    day_prior # Want forecasts initialized one day before sample was taken (5:30am IST)
   )
 
   # Get latest forecast for each forecast (that is at least one day older than sample time)
@@ -183,7 +199,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	forecasts_for_times = ee.ImageCollection(
     forecast_time_list.map(get_latest_forecast_for_time)
   )
-
+	
   # Assign metadata to forecast values and cumulative values
 	forecast_values = forecasts_for_times \
     .map(lambda img: img.sample(sample.geometry())) \
@@ -192,6 +208,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
       .set('forecast_creation_dt', f.id().slice(0, 10)) # Same as below
       .set('forecast_hour', f.id().slice(11, 14)) # Would be good to make this less hacky
       .set('sample_idx', sample_idx)
+			.set('num_sum', 1)
     )
 	
 	# Map each element of forecast_time_list to each feature of forecast_values
@@ -201,13 +218,11 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 			ee.List(forecast_times).get(forecast_values_list.indexOf(f))))
 	)
 
-    # Get forecast at time of sample
-	sample_dt_rounded = sample_dt \
-    .millis() \
-    .divide(1000 * 60 * 60) \
-    .round() \
-    .multiply(1000 * 60 * 60) # Round sample time to nearest hour
-	sample_time_forecast = ee.Image(get_latest_forecast_for_time(sample_dt_rounded))
+  # Get forecast at time of sample
+	sample_dt_rounded = ee.Date(
+		sample_dt.millis().divide(1000 * 60 * 60).round().multiply(1000 * 60 * 60)
+	) # Round sample time to nearest hour
+	sample_time_forecast = ee.Image(get_latest_forecast_for_time(sample_dt_rounded.millis()))
 
 	id = sample_time_forecast.getString('system:id').split("/").getString(2)
 	sample_time_forecast = sample_time_forecast \
@@ -218,22 +233,22 @@ def get_sample_gfs_forecast(sample: ee.Feature,
     .set('forecast_creation_dt', id.slice(0, 10)) \
 		.set('forecast_hour', id.slice(11, 14)) \
     .set('forecast_time', 'sample') \
-    .set('sample_idx', sample_idx)
+    .set('sample_idx', sample_idx) \
+		.set('num_sum', 1)
 
-  # Get cumulative values for the week prior to the sample time
-  # 9 AM UTC is 3:30 PM IST
-	def get_cumulative_history(lookback_days: ee.Number) -> ee.FeatureCollection:
+  # Get cumulative values in days prior at fixed time
+	def get_daily_cum(lookback_days: ee.Number) -> ee.Feature:
 		"""Get cumulative history for a given number of days."""
 		cum_days = ee.List.sequence(0, ee.Number(lookback_days).multiply(-1), step=-1)
 		gfs_subset = gfs.filterDate(
-      day_prior.advance(ee.Number(cum_days.sort().get(0)).subtract(1), 'day'),
+      day_prior.advance(cum_days.sort().getNumber(0).subtract(1), 'day'),
       sample_dt
     )
 
     # Ought to check that you are summing correct number of days for each
 		global_history = ee.ImageCollection(
       cum_days
-      .map(lambda day: day_prior.advance(day, 'day').update(hour=9).millis())
+      .map(lambda day: day_prior.advance(day, 'day').update(hour=9).millis()) # 15:30 IST
       .map(lambda f_time: gfs_subset.filter(ee.Filter.eq('forecast_time', f_time)).sort('creation_time', False).first())
     )
 		global_aggregate = global_history.reduce(ee.Reducer.sum())
@@ -242,12 +257,13 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 		cum_values = cum_values \
       .rename(cum_values.bandNames().map(lambda name: ee.String(name).slice(0, -4))) \
       .sample(sample.geometry()) \
-      .first() # Remove sum from end of band names
+      .first() \
+			.set('num_sum', global_history.size())
 		
 		return cum_values
-  
-	three_day_history = get_cumulative_history(3)
-	week_history = get_cumulative_history(7)
+		
+	three_day_history = get_daily_cum(3)
+	week_history = get_daily_cum(7)
 
 	three_day_history = three_day_history \
     .set('sample_idx', sample_idx) \
@@ -256,9 +272,82 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	week_history = week_history \
     .set('sample_idx', sample_idx) \
     .set('forecast_time', 'seven_day_cum')
+	
+
+	# Get cumulative values over course of a day
+	def get_hourly_cum(cum_start: ee.Date, cum_end: ee.Date) -> ee.Feature:
+		"""Vibes.
+		
+		Args:
+			cum_start: start time. Must be rounded to an hour.
+			cum_end: time to end sum. Must be rounded to an hour.
+			
+		Returns:
+			Feature containing the sum of hourly forecasts.
+		"""
+		forecast_subset = gfs.filterDate( 
+			cum_start.advance(-4, 'day'),
+			day_prior # Want forecasts initialized one day before sample was taken (5:30am IST)
+		)
+
+		# Get hourly forecasts between start and end times
+		hourly_times = ee.List.sequence(
+			cum_start.millis(),
+			cum_end.millis(),
+			1000 * 60 * 60 # 1 hour steps
+		)
+
+		hourly_forecasts = ee.ImageCollection(
+			hourly_times.map(lambda f_time: forecast_subset
+				.filter(ee.Filter.eq('forecast_time', f_time))
+				.sort('creation_time', False)
+				.first()
+			)
+		)
+
+		# Sum values across all hours
+		hourly_aggregate = hourly_forecasts.reduce(ee.Reducer.sum())
+		hourly_values = ee.Image(hourly_aggregate)
+		hourly_values = hourly_values \
+			.rename(hourly_values.bandNames().map(lambda name: ee.String(name).slice(0, -4))) \
+			.sample(sample.geometry()) \
+			.first() \
+			.set('num_sum', hourly_forecasts.size())
+
+		return hourly_values
+
+
+	# Get sum of values up to sample time on day
+	cum_start = sample_dt_rounded.update(hour=0, minute=30, second=0, timeZone=timezone) # Offset due to Indian timezone.
+	same_day_sums = get_hourly_cum(cum_start, sample_dt_rounded)
+	
+	same_day_sums = same_day_sums \
+		.set('sample_idx', sample_idx) \
+		.set('forecast_time', 'same_day_sum')
+
+	# Get sum of values over previous day
+	cum_start = sample_dt_rounded \
+		.advance(-1, 'day') \
+		.update(hour=0, minute=30, second=0, timeZone=timezone)
+	cum_end = cum_start.advance(1, 'day')
+	before_day_sums = get_hourly_cum(cum_start, cum_end)
+
+	before_day_sums = before_day_sums \
+		.set('sample_idx', sample_idx) \
+		.set('forecast_time', 'before_day_sum')
 
   # Merge and return
-	forecast_values = forecast_values.merge(ee.FeatureCollection([sample_time_forecast, three_day_history, week_history]))
+	forecast_values = forecast_values.merge(
+		ee.FeatureCollection(
+			[
+				sample_time_forecast,
+				three_day_history,
+				week_history,
+				same_day_sums,
+				before_day_sums
+			]
+		)
+	)
   
 	return forecast_values
 
@@ -274,8 +363,7 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 	ee.Initialize(project=project)
 
 	# Export GFS data
-	samples_ee = gdf_to_ee(samples)
-	samples_ee = samples_ee.map(lambda f: f.set('sample_dt', ee.Date(f.get('sample_dt'))))
+	samples_ee = gdf_to_ee(samples, date='sample_dt', date_format="yyyy-MM-dd'T'HH:mm:ssZ")
 
 	forecast_coll = samples_ee \
 		.map(lambda f: get_sample_gfs_forecast(f, forecast_times)) \
@@ -299,3 +387,24 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 			   "Visit https://code.earthengine.google.com/tasks to monitor the export.")
 	
 	return task
+
+
+def get_sentinel2_values_at_feature(feature: ee.Feature) -> ee.Feature:
+  """Write docstring later."""
+  nearest_image = get_nearest_sentinel2_image(feature)
+
+  # Select bands of interest and add vegetation indices
+  nearest_image = scale_sentinel2_l2a(nearest_image)
+  nearest_image = nearest_image.select(list(SENTINEL2_DEFAULT_BANDS.keys()))
+  nearest_image = nearest_image.addBands([
+    nearest_image.normalizedDifference(['B8', 'B4']).rename("ndvi"),
+    nearest_image.normalizedDifference(['B3', 'B8']).rename('ndwi')
+  ])
+
+  values = nearest_image \
+    .sample(feature.geometry()) \
+    .first() \
+    .set('sample_idx', feature.get('sample_idx')) \
+    .set('hours_from_measurement', nearest_image.get('hours_from_date'))
+
+  return values

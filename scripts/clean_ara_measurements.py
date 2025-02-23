@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from fwi_predict.constants import TIMEZONE
+from fwi_predict.constants import TZ_STRING
 
 
 yes_no_map = {'Yes': True, 'No': False}
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         ara.loc[~str_formatted & ara['sample_time'].notna(), 'sample_time'].apply(lambda x: x.strftime("%H:%M:%S"))
     
     ara['sample_dt'] = pd.to_datetime(ara['date'].dt.strftime("%Y-%m-%d") + ' ' + ara['sample_time'], errors='coerce')
-    ara['sample_dt'] = ara['sample_dt'].dt.tz_localize(TIMEZONE)
+    ara['sample_dt'] = ara['sample_dt'].dt.tz_localize(TZ_STRING)
     ara = ara.drop(columns=['date', 'sample_time'])
 
     ara['time_of_day'] = ara['time_of_day'].str.lower()

@@ -72,12 +72,14 @@ def create_standard_dataset(samples: gpd.GeoDataFrame,
 	gfs_clean = clean_gfs(gfs)
 
 	# Create prediction dataframe
-	predict_df = samples.set_index('sample_idx').join(gfs_clean)
+	predict_df = samples.set_index('sample_idx').join(gfs_clean).reset_index()
 
 	# Add time categoricals
-	predict_df['morning'] = predict_df['sample_dt'].dt.hour < 12
+	predict_df['hour'] = predict_df['sample_dt'].dt.hour
 	predict_df['month'] = predict_df['sample_dt'].dt.month
-	predict_df['week_of_month'] = (predict_df['sample_dt'].dt.day - 1) // 7 + 1
-	predict_df['day_of_week'] = predict_df['sample_dt'].dt.dayofweek
+	# predict_df['morning'] = predict_df['sample_dt'].dt.hour < 12
+	# predict_df['month'] = predict_df['sample_dt'].dt.month
+	# predict_df['week_of_month'] = (predict_df['sample_dt'].dt.day - 1) // 7 + 1
+	# predict_df['day_of_week'] = predict_df['sample_dt'].dt.dayofweek
 
 	return predict_df
