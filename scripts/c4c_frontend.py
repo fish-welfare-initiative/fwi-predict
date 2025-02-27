@@ -6,7 +6,7 @@ import folium
 from streamlit_folium import folium_static
 from folium.plugins import MarkerCluster
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 # Load environment variables
 #load_dotenv()
@@ -95,7 +95,7 @@ st.subheader("Time-Series Predictions")
 # Mock time-series data
 mock_timeseries_data = {
     "date": pd.date_range(start="2024-02-20", periods=10, freq="D").tolist() * 2,
-    "time": ["8 AM"] * 10 + ["4 PM"] * 10,
+    "time": ["4 PM"] * 10 + ["8 AM"] * 10,
     "pond_name": ["Pond A"] * 20,
     "dissolved_oxygen": [5.2, 5.5, 5.1, 5.3, 5.4, 5.2, 5.6, 5.7, 5.5, 5.3] + [4.8, 4.9, 5.0, 4.7, 5.1, 4.9, 4.8, 4.6, 5.0, 4.9]
 }
