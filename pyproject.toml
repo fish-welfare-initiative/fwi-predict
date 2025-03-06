@@ -30,6 +30,7 @@ seaborn = "^0.13.2"
 mapclassify = "^2.8.1"
 xlrd = "^2.0.1"
 pygwalker = "^0.4.9.13"
+nbformat = "^5.10.4"
 
 [build-system]
 requires = ["poetry-core"]
