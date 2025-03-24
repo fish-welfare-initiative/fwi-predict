@@ -22,11 +22,13 @@ autogluon-tabular = {extras = ["all"], version = "^1.2"}
 xgboost = "^2.1.3"
 sktime = "^0.36.0"
 streamlit-folium = "^0.24.0"
+tabpfn = "^2.0.6"
+tabpfn-extensions = "^0.0.4"
+gpy = "^1.13.2"
 
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
-seaborn = "^0.13.2"
 mapclassify = "^2.8.1"
 xlrd = "^2.0.1"
 pygwalker = "^0.4.9.13"
