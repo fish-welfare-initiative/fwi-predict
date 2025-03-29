@@ -4107,6 +4107,25 @@ files = [
 ]
 
 [[package]]
+name = "oauth2client"
+version = "4.1.3"
+description = "OAuth 2.0 client library"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "oauth2client-4.1.3-py2.py3-none-any.whl", hash = "sha256:b8a81cc5d60e2d364f0b1b98f958dbd472887acaf1a5b05e21c28c31a2d6d3ac"},
+    {file = "oauth2client-4.1.3.tar.gz", hash = "sha256:d486741e451287f69568a4d26d70d9acd73a2bbfa275746c535b4209891cccc6"},
+]
+
+[package.dependencies]
+httplib2 = ">=0.9.1"
+pyasn1 = ">=0.1.7"
+pyasn1-modules = ">=0.0.5"
+rsa = ">=3.1.4"
+six = ">=1.6.1"
+
+[[package]]
 name = "opencensus"
 version = "0.11.4"
 description = "A stats collection and distributed tracing framework"
@@ -5124,6 +5143,23 @@ numpy = ">=1.16.4"
 [package.extras]
 carto = ["pydeck-carto"]
 jupyter = ["ipykernel (>=5.1.2) ; python_version >= \"3.4\"", "ipython (>=5.8.0) ; python_version < \"3.4\"", "ipywidgets (>=7,<8)", "traitlets (>=4.3.2)"]
+
+[[package]]
+name = "pydrive"
+version = "1.3.1"
+description = "Google Drive API made easy."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "PyDrive-1.3.1-py2-none-any.whl", hash = "sha256:5b94e971430722eb5c40a090f21df46b32e51399d747c1511796f63f902d1095"},
+    {file = "PyDrive-1.3.1.tar.gz", hash = "sha256:83890dcc2278081c6e3f6a8da1f8083e25de0bcc8eb7c91374908c5549a20787"},
+]
+
+[package.dependencies]
+google-api-python-client = ">=1.2"
+oauth2client = ">=4.0.0"
+PyYAML = ">=3.0"
 
 [[package]]
 name = "pygments"
@@ -6283,6 +6319,61 @@ test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=
 type = ["importlib_metadata (>=7.0.2) ; python_version < \"3.10\"", "jaraco.develop (>=7.21) ; sys_platform != \"cygwin\"", "mypy (==1.14.*)", "pytest-mypy"]
 
 [[package]]
+name = "shap"
+version = "0.47.1"
+description = "A unified approach to explain the output of any machine learning model."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "shap-0.47.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:65d68e714b1781808db1018b81dbec2745eba70d6ea3575c1e21583a941a5cf9"},
+    {file = "shap-0.47.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7995d7311457032c990149002bb32224b0c0fb674ade264f348b415b4509fd39"},
+    {file = "shap-0.47.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:05d8082ffed7de29bd1c8aec9fd35432145f8f817b3aa90fa0a43c7de1b3078c"},
+    {file = "shap-0.47.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:224453a8fd089c1866aba90856ed14ac125a08a1c5ae8a4f40c4c1192a48843c"},
+    {file = "shap-0.47.1-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:ed48a54fd3f9faa722ecf912453f5d833cb4289fe2360d5d6c5a3498bcb275b1"},
+    {file = "shap-0.47.1-cp310-cp310-win_amd64.whl", hash = "sha256:61d4fd953805961d212f6c5fd79c713c24cd24769e0cbc1926868b26c0183196"},
+    {file = "shap-0.47.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6afca56a634190133710f65c6618c942083d3533e6d2463bcd65317e12587c4d"},
+    {file = "shap-0.47.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:3275d45fafced93978ffeee5aeb035637e54646df5d86624b7d3c8317c77e5f7"},
+    {file = "shap-0.47.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e5b9b39ef79a2e683ff11c54191aeb75ef4553e29ff4f3d4219a2bd8ddaf071b"},
+    {file = "shap-0.47.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a8acf428a8af28576d58770bdd81bf33bb82aaa00495f821e5dbf4b0d1028d74"},
+    {file = "shap-0.47.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:4789ef942e7f57aa9810497c1fdd0fba0011a9fce91010802ff39cfac4bd8921"},
+    {file = "shap-0.47.1-cp311-cp311-win_amd64.whl", hash = "sha256:673904d6219b1ef65f1d2fb311357de4e56d0fdeb062a6853ba11d57f4305ef2"},
+    {file = "shap-0.47.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:961fd025aa5d53b6df947ab0e2d6b1f98d206bac36ed65c4c51f74921b7dadbc"},
+    {file = "shap-0.47.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:0f876a4eb06666555f5b83edca3c900ca7c3a8d5ebf2deef330b41a62f7dda7f"},
+    {file = "shap-0.47.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3f67da47d287dcd861dd664d92d595c8a0d5c89cba895e37c21b76ca905edc72"},
+    {file = "shap-0.47.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c0a36cdc8c681901491714d9cea9f98af4c2da6328394382195386f99d520b5e"},
+    {file = "shap-0.47.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:55709c08d163b74e9de4b201e8fe37362270914cef43e89c75d58728f1c5f0b6"},
+    {file = "shap-0.47.1-cp312-cp312-win_amd64.whl", hash = "sha256:4dd5a497dba744e1190fbc1631603f5d8441eabde0bf882b9e6aefb9f083812d"},
+    {file = "shap-0.47.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:d891d055a92fb5c14f91b296b407b41a51efd99689faff165a9e862f2053173c"},
+    {file = "shap-0.47.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:6f713b6cbd601b94e5b450aa3895be09ad077a44ca7ad405da8cef59b5d570e0"},
+    {file = "shap-0.47.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b3db5eeb983df9ab7e9e67a79c2658739fdfcfa191e6227dee11eebb34e7e18e"},
+    {file = "shap-0.47.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:05a9cafd2c9ffb709086b5012fbc8e2b7bc2bca1eb477a5608db66bfb832f9b0"},
+    {file = "shap-0.47.1-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:763586db22aef62b01c8fb25fd9ee75e26a6d49279d10312e85f50b7d776ce6a"},
+    {file = "shap-0.47.1-cp39-cp39-win_amd64.whl", hash = "sha256:8c4d4ad520ba65e8e44a3c77a731b99415ead11355cffadb59ec6758deaead4c"},
+    {file = "shap-0.47.1.tar.gz", hash = "sha256:292dc548c53fb0438fddacea793eb3482936621ad50a65529630684155625dce"},
+]
+
+[package.dependencies]
+cloudpickle = "*"
+numba = ">=0.54"
+numpy = "*"
+packaging = ">20.9"
+pandas = "*"
+scikit-learn = "*"
+scipy = "*"
+slicer = "0.0.8"
+tqdm = ">=4.27.0"
+typing-extensions = "*"
+
+[package.extras]
+docs = ["ipython", "ipywidgets", "matplotlib", "myst-parser", "nbsphinx", "numpydoc", "requests", "sphinx", "sphinx_github_changelog", "sphinx_rtd_theme"]
+others = ["lime"]
+plots = ["ipython", "matplotlib"]
+test = ["catboost", "gpboost", "lightgbm", "ngboost", "numpy (<2.0)", "opencv-python", "protobuf (==3.20.3)", "pyod", "pyspark", "pytest", "pytest-cov", "pytest-mpl", "sentencepiece", "tensorflow", "tf-keras", "torch (==2.2.0) ; sys_platform == \"darwin\"", "torch ; sys_platform != \"darwin\"", "torchvision", "transformers (<4.49.0) ; sys_platform == \"darwin\"", "transformers ; sys_platform != \"darwin\"", "xgboost"]
+test-core = ["mypy", "pytest", "pytest-cov", "pytest-mpl"]
+test-notebooks = ["datasets", "jupyter", "keras", "nbconvert", "nbformat", "nlp", "transformers"]
+
+[[package]]
 name = "shapely"
 version = "2.0.6"
 description = "Manipulation and analysis of geometric objects"
@@ -6412,6 +6503,18 @@ param-est = ["seasonal (>=0.3.1,<0.4) ; python_version < \"3.13\"", "statsmodels
 regression = ["numba (>=0.53,<0.62) ; python_version < \"3.13\"", "tensorflow (>=2,<2.17) ; python_version < \"3.12\""]
 tests = ["pytest (>=7.4,<8.4)", "pytest-randomly (>=3.15,<3.17)", "pytest-timeout (>=2.1,<2.4)", "pytest-xdist (>=3.3,<3.7)"]
 transformations = ["esig (>=0.9.7,<0.10) ; python_version < \"3.11\"", "filterpy (>=1.4.5,<1.5) ; python_version < \"3.13\"", "holidays (>=0.29,<0.59) ; python_version < \"3.13\"", "mne (>=1.5,<1.9) ; python_version < \"3.13\"", "numba (>=0.53,<0.62) ; python_version < \"3.13\"", "pycatch22 (>=0.4,<0.4.6) ; python_version < \"3.13\"", "statsmodels (>=0.12.1,<0.15) ; python_version < \"3.13\"", "stumpy (>=1.5.1,<1.13) ; python_version < \"3.12\"", "temporian (>=0.7.0,!=0.8.0,<0.9.0) ; python_version < \"3.12\" and sys_platform != \"win32\" and platform_machine != \"aarch64\"", "tsfresh (>=0.17,<0.21) ; python_version < \"3.12\""]
+
+[[package]]
+name = "slicer"
+version = "0.0.8"
+description = "A small package for big slicing."
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "slicer-0.0.8-py3-none-any.whl", hash = "sha256:6c206258543aecd010d497dc2eca9d2805860a0b3758673903456b7df7934dc3"},
+    {file = "slicer-0.0.8.tar.gz", hash = "sha256:2e7553af73f0c0c2d355f4afcc3ecf97c6f2156fcf4593955c3f56cf6c4d6eb7"},
+]
 
 [[package]]
 name = "smart-open"
@@ -7997,4 +8100,4 @@ scipy = ">=1.0.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "3.12.7"
-content-hash = "970f62eb17d08b332f13567f1d456624c82fb540a51b86a5a8776e28959afa48"
+content-hash = "5abd52db233a48f71b90f74e9ba3d349faea9dad3ba9c0f696d7acff2484b976"

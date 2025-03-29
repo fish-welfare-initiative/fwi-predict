@@ -3,6 +3,7 @@ from pathlib import Path
 import click
 import geopandas as gpd
 
+from fwi_predict.gcs import upload_files
 from fwi_predict.pipeline import create_standard_dataset
 
 @click.command()
@@ -22,11 +23,17 @@ def create_dataset(samples_path, outdir, gfs_download_root, gcs_bucket, gee_proj
 															 filename, gcs_bucket, gee_project)
 		
 	if ds is not None:
+		# Save locally
 		outdir = Path(outdir).resolve()
 		outdir.mkdir(parents=True, exist_ok=True)
 		outpath = outdir / f"{filename}_predict_df.csv"
 		ds.to_csv(outpath)
 		print(f"Training data created.\nSaved to {outpath}.")
+
+		# Upload to GCS
+		gcs_dest = Path("train") / "predict_dfs" / f"{filename}_predict_df.csv"
+		upload_files(outpath, gcs_dest, gcs_bucket, project=gee_project)
+		print(f"Uploaded to gs://{gcs_bucket}/{gcs_dest}")
 	else:
 		print("Training data creation failed.")
 
