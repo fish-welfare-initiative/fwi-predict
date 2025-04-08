@@ -202,7 +202,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 	
   # Assign metadata to forecast values and cumulative values
 	forecast_values = forecasts_for_times \
-    .map(lambda img: img.sample(sample.geometry())) \
+    .map(lambda img: img.sample(sample.geometry(), dropNulls=False)) \
     .flatten() \
     .map(lambda f: f # Set metadata
       .set('forecast_creation_dt', f.id().slice(0, 10)) # Same as below
@@ -226,7 +226,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 
 	id = sample_time_forecast.getString('system:id').split("/").getString(2)
 	sample_time_forecast = sample_time_forecast \
-    .sample(sample.geometry()) \
+    .sample(sample.geometry(), dropNulls=False) \
     .first()
   
 	sample_time_forecast = sample_time_forecast \
@@ -256,7 +256,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 		cum_values = ee.Image(global_aggregate)
 		cum_values = cum_values \
       .rename(cum_values.bandNames().map(lambda name: ee.String(name).slice(0, -4))) \
-      .sample(sample.geometry()) \
+      .sample(sample.geometry(), dropNulls=False) \
       .first() \
 			.set('num_sum', global_history.size())
 		
@@ -310,7 +310,7 @@ def get_sample_gfs_forecast(sample: ee.Feature,
 		hourly_values = ee.Image(hourly_aggregate)
 		hourly_values = hourly_values \
 			.rename(hourly_values.bandNames().map(lambda name: ee.String(name).slice(0, -4))) \
-			.sample(sample.geometry()) \
+			.sample(sample.geometry(), dropNulls=False) \
 			.first() \
 			.set('num_sum', hourly_forecasts.size())
 
@@ -363,7 +363,8 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 	ee.Initialize(project=project)
 
 	# Export GFS data
-	samples_ee = gdf_to_ee(samples, date='sample_dt', date_format="yyyy-MM-dd'T'HH:mm:ssZ")
+	small_df = samples[['sample_idx', 'sample_dt', 'geometry']]
+	samples_ee = gdf_to_ee(small_df, date='sample_dt', date_format="yyyy-MM-dd'T'HH:mm:ssZ")
 
 	forecast_coll = samples_ee \
 		.map(lambda f: get_sample_gfs_forecast(f, forecast_times)) \
@@ -389,9 +390,9 @@ def export_forecasts_for_samples(samples: gpd.GeoDataFrame,
 	return task
 
 
-def get_sentinel2_values_at_feature(feature: ee.Feature) -> ee.Feature:
+def get_sentinel2_values_at_feature(feature: ee.Feature, back_days: int = 10) -> ee.Feature:
   """Write docstring later."""
-  nearest_image = get_nearest_sentinel2_image(feature)
+  nearest_image = get_nearest_sentinel2_image(feature, back_days=back_days)
 
   # Select bands of interest and add vegetation indices
   nearest_image = scale_sentinel2_l2a(nearest_image)
@@ -402,8 +403,8 @@ def get_sentinel2_values_at_feature(feature: ee.Feature) -> ee.Feature:
   ])
 
   values = nearest_image \
-    .sample(feature.geometry()) \
-    .first() \
+    .sample(feature.geometry(), dropNulls=False) \
+		.first() \
     .set('sample_idx', feature.get('sample_idx')) \
     .set('hours_from_measurement', nearest_image.get('hours_from_date'))
 
