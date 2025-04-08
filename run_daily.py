@@ -15,12 +15,12 @@ from fwi_predict.pipeline import create_standard_dataset
 
 def prep_daily_sample(pond_metadata: gpd.GeoDataFrame,
 					  					target_date: Union[int, str] = 'tomorrow',
-					  					times_of_day: List[str] = ['09:00:00', '16:00:00']) -> gpd.GeoDataFrame:
+					  					times_of_day: List[str] = ['08:00:00', '16:00:00']) -> gpd.GeoDataFrame:
 	"""Get dataframe of samples to predict for a given day and times of day."""
 
 	keep_cols = ['pond_id', 'farmer', 'village', 'geometry', 'pond_depth_meters']
 	ponds = pond_metadata[keep_cols].copy()
-	ponds['winkler'] = True
+	ponds['do_winkler'] = True
 
 	# Add timezone information
 	ponds['timezones'] = ponds['geometry'].apply(
@@ -86,7 +86,6 @@ def run_daily_inference(pond_metadata: gpd.GeoDataFrame,
 
 	# Get time parameters
 	predict_df['morning'] = predict_df['hour'] < 12
-	predict_df['half_hour'] = (predict_df['sample_dt'].dt.hour * 2 + (predict_df['sample_dt'].dt.minute >= 30).astype(int))
 
 	# Load prediction model
 	model_root = Path("./models/jun_21_dec_24_w_metadata").resolve()
