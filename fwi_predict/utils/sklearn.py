@@ -1,6 +1,8 @@
 
 import matplotlib.pyplot as plt
-from sklearn.base import is_classifier
+import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator, is_classifier, TransformerMixin
 from sklearn.preprocessing import label_binarize
 from sklearn.calibration import calibration_curve
 
@@ -109,3 +111,48 @@ class MulticlassCalibrationDisplay:
 
     if no_ax_passed:
       plt.show()
+
+
+# Define diurnal detrend transform
+class DiurnalDetrend(BaseEstimator, TransformerMixin):
+    """Detrend data by subtracting morning/evening means."""
+    def fit(self, X, y=None):
+        # Store feature names from X
+        self.feature_names_in_ = np.asarray(X.columns.tolist())
+        
+        # Calculate means for morning/evening
+        df = pd.DataFrame({'y': y, 'morning': X['morning']})
+        self.morning_mean_ = df[df['morning']]['y'].mean()
+        self.evening_mean_ = df[~df['morning']]['y'].mean()
+        return self
+
+    def transform(self, X, y=None):
+        if y is not None:
+            y_detrended = y.copy()
+            y_detrended[X['morning']] -= self.morning_mean_
+            y_detrended[~X['morning']] -= self.evening_mean_
+            return y_detrended
+        return X
+    
+    def inverse_transform(self, X, y):
+        y_retrended = y.copy()
+        y_retrended[X['morning']] += self.morning_mean_
+        y_retrended[~X['morning']] += self.evening_mean_
+        return y_retrended
+    
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+        
+        Parameters
+        ----------
+        input_features : list of str or None, default=None
+            Input feature names. If None, then feature_names_in_ is used.
+            
+        Returns
+        -------
+        feature_names_out : ndarray of str
+            Output feature names.
+        """
+        if input_features is None:
+            input_features = self.feature_names_in_
+        return np.asarray(input_features)
